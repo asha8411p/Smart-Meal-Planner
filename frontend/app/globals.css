@@ -2,26 +2,100 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom global theme settings */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background-color: #ffe2d9;  /* Light peach background */
+  --container-bg-color: #ffccd5; /* Soft berry background */
+  --foreground-color: #3d3d3d;  /* Darker text color for contrast */
+  --input-bg-color: #ffc1a1;    /* Peach input background */
+  --input-border-color: #ff9a8b; /* Peach input border */
+  --button-bg-color: #d35d6e;    /* Berry button background */
+  --button-hover-color: #b34253; /* Darker berry button hover */
+  --button-text-color: #ffffff;  /* White button text */
+  --link-color: #f76c5e;        /* Bright peachy-pink link color */
+  --link-hover-color: #ff4a4a;  /* Bright red-pink link hover color */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Apply global background and text color */
 body {
-  color: var(--foreground);
-  background: var(--background);
+  background-color: var(--background-color); /* Light peach background */
+  color: var(--foreground-color); /* Darker text for readability */
   font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+/* Form container */
+.container {
+  background-color: var(--container-bg-color);
+  padding: 2rem;
+  max-width: 400px;
+  border-radius: 0.75rem; /* Rounded corners */
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  border: 1px solid #ff9a8b; /* Container border with peach color */
+}
+
+/* Form heading styles */
+h2 {
+  font-size: 2rem;  /* Slightly larger heading */
+  font-weight: bold;
+  text-align: center;
+  color: var(--foreground-color);
+  margin-bottom: 1.5rem;
+}
+
+/* Input fields */
+input {
+  background-color: var(--input-bg-color);
+  border: 1px solid var(--input-border-color);
+  color: var(--foreground-color);
+  padding: 0.75rem;  /* Increased padding */
+  border-radius: 0.5rem;
+  width: 100%;
+  margin-bottom: 1rem;
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  font-size: 1rem;
+}
+
+input:focus {
+  border-color: var(--link-color);  /* Peachy-pink border on focus */
+  box-shadow: 0 0 0 2px var(--link-color);
+}
+
+/* Button styles */
+button {
+  background-color: var(--button-bg-color);
+  color: var(--button-text-color);
+  padding: 0.75rem;  /* Increase button height */
+  border-radius: 0.5rem;
+  cursor: pointer;
+  width: 100%;
+  margin-bottom: 1rem;
+  font-weight: bold;  /* Make the button text bold */
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+button:hover {
+  background-color: var(--button-hover-color);
+  transform: scale(1.02); /* Slight scaling effect on hover */
+}
+
+/* Link styles */
+a {
+  color: var(--link-color);
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+a:hover {
+  color: var(--link-hover-color);
+}
+
+/* Paragraph for link */
+p {
+  text-align: center;
+  color: var(--foreground-color);
+  font-size: 0.875rem;
 }
