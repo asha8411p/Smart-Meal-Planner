@@ -18,7 +18,7 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"] // Adjusted path alias for root level
+      "@/*": ["./app/*"] // Updated to map from the app directory
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
