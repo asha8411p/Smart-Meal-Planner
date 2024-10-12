@@ -1,22 +1,47 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter(); // Initialize router here
 
-  const handleSignIn = () => {
-    // Handle sign-in logic here
-    router.push("/home");
+  const handleSignIn = async () => {
+    await fetch("http://localhost:5000/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: email,
+        password: password,
+      }),
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error("An error occurred. Please try again.");
+        }
+      })
+      .then((data) => {
+        localStorage.setItem("token", data.token);
+        router.push("/home");
+      })
+      .catch((error) => {
+        console.error(error);
+        alert("An error occurred. Please try again.");
+      });
   };
 
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-[var(--background-color)]">
       <div className="text-center space-y-8 p-8 max-w-lg mx-auto bg-[var(--container-bg-color)] rounded-3xl shadow-2xl">
-        <h1 className="text-4xl font-extrabold text-[var(--foreground-color)]">Sign In</h1>
+        <h1 className="text-4xl font-extrabold text-[var(--foreground-color)]">
+          Sign In
+        </h1>
         <p className="text-md text-[var(--foreground-color)]">
           Welcome back! Please sign in to continue.
         </p>
@@ -47,7 +72,10 @@ export default function SignIn() {
 
         <p className="text-sm text-[var(--foreground-color)]">
           Don’t have an account?{" "}
-          <Link href="/auth/sign-up" className="text-[var(--link-color)] hover:text-[var(--link-hover-color)]">
+          <Link
+            href="/auth/sign-up"
+            className="text-[var(--link-color)] hover:text-[var(--link-hover-color)]"
+          >
             Sign Up
           </Link>
         </p>
