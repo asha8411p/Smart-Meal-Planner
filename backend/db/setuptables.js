@@ -5,12 +5,12 @@ function setupTables() {
   db.query(
     `CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
     username VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    weight FLOAT NOT NULL,
-    height FLOAT NOT NULL,
-    activity_level VARCHAR(255) NOT NULL
+    weight FLOAT,
+    height FLOAT,
+    activity_level VARCHAR(255)
 );`,
     (err, result) => {
       if (err) throw err;
