@@ -1,8 +1,8 @@
 "use client";
 
+import Header from "@/components/ui/header";
 import { useState } from "react";
 import { FaTrash } from "react-icons/fa";
-import Header from "../components/ui/Header"; // Adjust the import path as needed
 
 // Define the type for the items in the shopping list
 interface ShoppingItem {
