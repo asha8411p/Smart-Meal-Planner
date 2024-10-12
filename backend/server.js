@@ -16,6 +16,7 @@ setupTables();
 app.use(cors());
 app.use(express.json());
 app.use("/exercise", require("./routes/exercise"));
+app.use("/auth", require("./routes/auth"));
 
 // Test route
 app.get("/", (req, res) => {
