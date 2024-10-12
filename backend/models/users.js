@@ -15,4 +15,19 @@ async function signup(user) {
   }
 }
 
-module.exports = { signup };
+async function getUserByUsername(username) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `SELECT * FROM users WHERE username = ?`,
+      [username],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        }
+        resolve(result[0]);
+      }
+    );
+  });
+}
+
+module.exports = { signup, getUserByUsername };
