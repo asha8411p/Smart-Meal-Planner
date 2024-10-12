@@ -3,7 +3,7 @@ const router = express.Router();
 const llmservice = require("../services/llmservice");
 
 router.get("/suggestion", async (req, res) => {
-  const exercise = llmservice.getExerciseSuggestion();
+  const exercise = await llmservice.getExerciseSuggestion();
 
   res.send(JSON.stringify(exercise));
 });
