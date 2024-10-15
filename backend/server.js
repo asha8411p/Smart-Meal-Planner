@@ -19,6 +19,7 @@ app.use("/exercise", require("./routes/exercise"));
 app.use("/auth", require("./routes/auth"));
 app.use("/meal", require("./routes/meal"));
 app.use("/exercise", require("./routes/exercise"));
+app.use("/shopping-list", require("./routes/shoppingList"));
 
 // Test route
 app.get("/", (req, res) => {

@@ -38,6 +38,7 @@ function setupTables() {
         id INT AUTO_INCREMENT PRIMARY KEY,
         meal_id INT,
         name VARCHAR(255) NOT NULL,
+        unit VARCHAR(255) NOT NULL,
         quantity FLOAT NOT NULL,
         price FLOAT NOT NULL,
         FOREIGN KEY (meal_id) REFERENCES meals(id)
