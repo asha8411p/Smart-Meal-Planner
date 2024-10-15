@@ -1,32 +1,59 @@
 "use client";
 
 import Header from "@/components/ui/header";
-import { useState } from "react";
+import { jwtDecode } from "jwt-decode";
+import { useEffect, useState } from "react";
 import { FaTrash } from "react-icons/fa";
 
 // Define the type for the items in the shopping list
 interface ShoppingItem {
   name: string;
   quantity: string;
-  metric: string;
+  unit: string;
   price: string;
   checked: boolean;
 }
+interface DecodedToken {
+  id: string;
+  username: string;
+  name: string;
+}
 
 export default function ShoppingList() {
-  const [items, setItems] = useState<ShoppingItem[]>([
-    { name: "Chicken", quantity: "250", metric: "g", price: "5", checked: false },
-    { name: "Tomato", quantity: "5", metric: "kg", price: "10", checked: false },
-    { name: "Milk", quantity: "1", metric: "L", price: "2.5", checked: false },
-    { name: "Eggs", quantity: "6", metric: "units", price: "3", checked: false },
-    { name: "Cheese", quantity: "500", metric: "g", price: "4", checked: false },
-    { name: "Potato", quantity: "2", metric: "kg", price: "1.5", checked: false },
-  ]);
+  const [items, setItems] = useState<ShoppingItem[]>([]);
 
   const [isModifying, setIsModifying] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [editableRowIndex, setEditableRowIndex] = useState<number | null>(null);
-  const [originalItems, setOriginalItems] = useState<ShoppingItem[] | null>(null);
+  const [originalItems, setOriginalItems] = useState<ShoppingItem[] | null>(
+    null
+  );
+  useEffect(() => {
+    const decodedToken = jwtDecode(
+      localStorage.getItem("token")!
+    ) as DecodedToken;
+
+    fetch("http://localhost:5000/shopping-list?id=" + decodedToken.id, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error("An error occurred. Please try again.");
+        }
+      })
+      .then((data) => {
+        setItems(data);
+      })
+      .catch((error) => {
+        console.error(error);
+        alert("An error occurred. Please try again.");
+      });
+  }, []);
 
   // Handle adding a new ingredient
   const handleAddIngredient = () => {
@@ -42,7 +69,7 @@ export default function ShoppingList() {
       // Add a new empty row
       setItems([
         ...items,
-        { name: "", quantity: "", metric: "", price: "", checked: false },
+        { name: "", quantity: "", unit: "", price: "", checked: false },
       ]);
       setEditableRowIndex(items.length); // Set the new row as editable
     }
@@ -75,17 +102,17 @@ export default function ShoppingList() {
     if (isAdding && editableRowIndex !== null) {
       // Only validate the new item
       const newItem = items[editableRowIndex];
-      if (!newItem.name || !newItem.quantity || !newItem.metric) {
-        alert("Error: Name, Quantity, and Metric are mandatory fields.");
+      if (!newItem.name || !newItem.quantity || !newItem.unit) {
+        alert("Error: Name, Quantity, and unit are mandatory fields.");
         return;
       }
     } else if (isModifying) {
       // Validate all items during modifying mode
       const hasEmptyFields = items.some(
-        (item) => !item.name || !item.quantity || !item.metric
+        (item) => !item.name || !item.quantity || !item.unit
       );
       if (hasEmptyFields) {
-        alert("Error: Name, Quantity, and Metric are mandatory fields.");
+        alert("Error: Name, Quantity, and unit are mandatory fields.");
         return;
       }
     }
@@ -185,109 +212,110 @@ export default function ShoppingList() {
                   {isModifying && <th className="px-4 py-2 w-1/12">Remove</th>}
                   <th className="px-4 py-2 w-1/5">Ingredient Name</th>
                   <th className="px-4 py-2 w-1/5">Quantity</th>
-                  <th className="px-4 py-2 w-1/5">Metric</th>
+                  <th className="px-4 py-2 w-1/5">unit</th>
                   <th className="px-4 py-2 w-1/5">Price ($)</th>
                   <th className="px-4 py-2 w-1/5 text-center">Select</th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((item, index) => (
-                  <tr
-                    key={index}
-                    className="border-t border-[var(--table-border-color)]"
-                  >
-                    {isModifying && (
-                      <td className="px-4 py-2 text-center">
-                        <button
-                          className="bg-transparent hover:bg-red-600 text-white rounded-full p-2 transition-all duration-300"
-                          onClick={() => handleRemoveRow(index)}
-                        >
-                          <FaTrash size={16} />
-                        </button>
+                {items.length > 0 &&
+                  items.map((item, index) => (
+                    <tr
+                      key={index}
+                      className="border-t border-[var(--table-border-color)]"
+                    >
+                      {isModifying && (
+                        <td className="px-4 py-2 text-center">
+                          <button
+                            className="bg-transparent hover:bg-red-600 text-white rounded-full p-2 transition-all duration-300"
+                            onClick={() => handleRemoveRow(index)}
+                          >
+                            <FaTrash size={16} />
+                          </button>
+                        </td>
+                      )}
+                      <td className="px-4 py-2 align-top">
+                        {isModifying ||
+                        (isAdding && index === editableRowIndex) ? (
+                          <input
+                            type="text"
+                            value={item.name}
+                            onChange={(e) =>
+                              handleChange(index, "name", e.target.value)
+                            }
+                            className="w-full bg-transparent border-b border-[var(--input-border-color)] text-[var(--foreground-color)] focus:outline-none px-2 h-10"
+                            placeholder="Name"
+                          />
+                        ) : (
+                          item.name
+                        )}
                       </td>
-                    )}
-                    <td className="px-4 py-2 align-top">
-                      {(isModifying ||
-                      (isAdding && index === editableRowIndex)) ? (
+                      <td className="px-4 py-2 align-top">
+                        {isModifying ||
+                        (isAdding && index === editableRowIndex) ? (
+                          <input
+                            type="text"
+                            value={item.quantity}
+                            onChange={(e) =>
+                              handleChange(index, "quantity", e.target.value)
+                            }
+                            className="w-full bg-transparent border-b border-[var(--input-border-color)] text-[var(--foreground-color)] focus:outline-none px-2 h-10"
+                            placeholder="Quantity"
+                          />
+                        ) : (
+                          item.quantity
+                        )}
+                      </td>
+                      <td className="px-4 py-2 align-top">
+                        {isModifying ||
+                        (isAdding && index === editableRowIndex) ? (
+                          <select
+                            value={item.unit}
+                            onChange={(e) =>
+                              handleChange(index, "unit", e.target.value)
+                            }
+                            className="w-full bg-transparent border-b border-[var(--input-border-color)] text-[var(--foreground-color)] focus:outline-none h-10 px-2"
+                          >
+                            <option value="">Select</option>
+                            <option value="units">units</option>
+                            <option value="kg">kg</option>
+                            <option value="g">g</option>
+                            <option value="mg">mg</option>
+                            <option value="L">L</option>
+                            <option value="mL">mL</option>
+                          </select>
+                        ) : (
+                          item.unit
+                        )}
+                      </td>
+                      <td className="px-4 py-2 align-top">
+                        {isModifying ||
+                        (isAdding && index === editableRowIndex) ? (
+                          <input
+                            type="text"
+                            value={item.price}
+                            onChange={(e) =>
+                              handleChange(index, "price", e.target.value)
+                            }
+                            className="w-full bg-transparent border-b border-[var(--input-border-color)] text-[var(--foreground-color)] focus:outline-none px-2 h-10"
+                            placeholder="Price"
+                          />
+                        ) : item.price ? (
+                          `$${item.price}`
+                        ) : (
+                          ""
+                        )}
+                      </td>
+                      <td className="px-4 py-2 text-center">
                         <input
-                          type="text"
-                          value={item.name}
-                          onChange={(e) =>
-                            handleChange(index, "name", e.target.value)
-                          }
-                          className="w-full bg-transparent border-b border-[var(--input-border-color)] text-[var(--foreground-color)] focus:outline-none px-2 h-10"
-                          placeholder="Name"
+                          type="checkbox"
+                          checked={item.checked}
+                          onChange={() => toggleCheck(index)}
+                          className="h-4 w-4 text-[var(--checkbox-color)] bg-[var(--checkbox-bg-color)] border-[var(--checkbox-border-color)] rounded"
                         />
-                      ) : (
-                        item.name
-                      )}
-                    </td>
-                    <td className="px-4 py-2 align-top">
-                      {(isModifying ||
-                      (isAdding && index === editableRowIndex)) ? (
-                        <input
-                          type="text"
-                          value={item.quantity}
-                          onChange={(e) =>
-                            handleChange(index, "quantity", e.target.value)
-                          }
-                          className="w-full bg-transparent border-b border-[var(--input-border-color)] text-[var(--foreground-color)] focus:outline-none px-2 h-10"
-                          placeholder="Quantity"
-                        />
-                      ) : (
-                        item.quantity
-                      )}
-                    </td>
-                    <td className="px-4 py-2 align-top">
-                      {(isModifying ||
-                      (isAdding && index === editableRowIndex)) ? (
-                        <select
-                          value={item.metric}
-                          onChange={(e) =>
-                            handleChange(index, "metric", e.target.value)
-                          }
-                          className="w-full bg-transparent border-b border-[var(--input-border-color)] text-[var(--foreground-color)] focus:outline-none h-10 px-2"
-                        >
-                          <option value="">Select</option>
-                          <option value="units">units</option>
-                          <option value="kg">kg</option>
-                          <option value="g">g</option>
-                          <option value="mg">mg</option>
-                          <option value="L">L</option>
-                          <option value="mL">mL</option>
-                        </select>
-                      ) : (
-                        item.metric
-                      )}
-                    </td>
-                    <td className="px-4 py-2 align-top">
-                      {(isModifying ||
-                      (isAdding && index === editableRowIndex)) ? (
-                        <input
-                          type="text"
-                          value={item.price}
-                          onChange={(e) =>
-                            handleChange(index, "price", e.target.value)
-                          }
-                          className="w-full bg-transparent border-b border-[var(--input-border-color)] text-[var(--foreground-color)] focus:outline-none px-2 h-10"
-                          placeholder="Price"
-                        />
-                      ) : item.price ? (
-                        `$${item.price}`
-                      ) : (
-                        ""
-                      )}
-                    </td>
-                    <td className="px-4 py-2 text-center">
-                      <input
-                        type="checkbox"
-                        checked={item.checked}
-                        onChange={() => toggleCheck(index)}
-                        className="h-4 w-4 text-[var(--checkbox-color)] bg-[var(--checkbox-bg-color)] border-[var(--checkbox-border-color)] rounded"
-                      />
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>
