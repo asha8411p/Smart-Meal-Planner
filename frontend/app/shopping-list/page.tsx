@@ -97,7 +97,7 @@ export default function ShoppingList() {
   };
 
   // Handle saving choices (for both adding and modifying)
-  const handleSaveChoices = () => {
+  const handleSaveChoices = async () => {
     // Validate mandatory fields before saving
     if (isAdding && editableRowIndex !== null) {
       // Only validate the new item
@@ -106,6 +106,29 @@ export default function ShoppingList() {
         alert("Error: Name, Quantity, and unit are mandatory fields.");
         return;
       }
+      await fetch(
+        "http://localhost:5000/shopping-list?id=" +
+          (jwtDecode(localStorage.getItem("token")!) as DecodedToken).id,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(newItem),
+        }
+      )
+        .then((response) => {
+          if (response.ok) {
+            alert("Your shopping list has been saved.");
+          } else {
+            throw new Error("An error occurred. Please try again.");
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          alert("An error occurred. Please try again.");
+        });
     } else if (isModifying) {
       // Validate all items during modifying mode
       const hasEmptyFields = items.some(
@@ -116,6 +139,7 @@ export default function ShoppingList() {
         return;
       }
     }
+
     // Save changes
     setIsModifying(false);
     setIsAdding(false);

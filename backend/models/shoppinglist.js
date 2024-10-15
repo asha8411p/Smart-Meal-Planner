@@ -15,4 +15,20 @@ async function getShoppingListByUserId(userId) {
   });
 }
 
-module.exports = { getShoppingListByUserId };
+async function addToShoppingList(userId, name, quantity, price, unit) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `INSERT INTO ingredients (name, quantity, price, unit) VALUES (?, ?, ?, ?); 
+       INSERT INTO shopping_list (user_id, ingredient_id) VALUES (?, LAST_INSERT_ID())`,
+      [name, quantity, price, unit, userId],
+      (err, result) => {
+        if (err) {
+          return reject(err);
+        }
+        resolve(result);
+      }
+    );
+  });
+}
+
+module.exports = { getShoppingListByUserId, addToShoppingList };

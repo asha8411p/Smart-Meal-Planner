@@ -5,6 +5,7 @@ const db = mysql.createConnection({
   user: "root", // you might need to change this
   password: "vkb58kqj", // and this
   database: "elec5620", // maybe even this
+  multipleStatements: true,
 });
 
 db.connect(function (err) {
