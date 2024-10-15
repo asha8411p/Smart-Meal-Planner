@@ -16,7 +16,7 @@ interface Meal {
 }
 
 export default function MealsPage() {
-  const [activeTab, setActiveTab] = useState<'logMeal' | 'viewMeals'>('logMeal');
+  const [activeTab, setActiveTab] = useState<'logMeal' | 'viewMeals' | 'budgetMeal'>('logMeal');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // State to control sidebar collapse
 
   // Form state variables
@@ -25,10 +25,12 @@ export default function MealsPage() {
   const [ingredients, setIngredients] = useState('');
   const [calories, setCalories] = useState('');
   const [budget, setBudget] = useState('');
+  const [timeframe, setTimeframe] = useState<'monthly' | 'fortnightly'>('monthly');
 
   const [savedMeals, setSavedMeals] = useState<Meal[]>([]);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [budgetSuggestions, setBudgetSuggestions] = useState<Meal[]>([]);
 
   const handleSaveMeal = () => {
     // Validate mandatory inputs
@@ -58,6 +60,37 @@ export default function MealsPage() {
     setBudget('');
     setError('');
     setSuccessMessage('Meal saved successfully!');
+  };
+
+  const generateBudgetMealSuggestion = async () => {
+    setBudgetSuggestions([]);
+    await fetch("http://localhost:5000/meal/budget", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        timeframe,
+        budget,
+      }),
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          setBudgetSuggestions([]);
+          throw new Error("An error occurred. Please try again.");
+        }
+      })
+      .then((data) => {
+        setBudgetSuggestions(data);
+      });
+  };
+
+  const handleSaveBudgetMeal = (meal: Meal) => {
+    setSavedMeals([...savedMeals, meal]);
+    setSuccessMessage('Budget meal saved successfully!');
   };
 
   return (
@@ -98,6 +131,15 @@ export default function MealsPage() {
             >
               <FiList className="text-xl" />
               {!sidebarCollapsed && <span className="ml-3">View Saved Meals</span>}
+            </li>
+            <li
+              className={`cursor-pointer mb-4 flex items-center ${
+                activeTab === 'budgetMeal' ? 'text-[var(--focus-ring-color)] font-bold' : ''
+              }`}
+              onClick={() => setActiveTab('budgetMeal')}
+            >
+              <FiList className="text-xl" />
+              {!sidebarCollapsed && <span className="ml-3">Budget Meal</span>}
             </li>
           </ul>
 
@@ -241,6 +283,77 @@ export default function MealsPage() {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'budgetMeal' && (
+            <div>
+              <h2 className="text-3xl font-semibold mb-6">Budget Meal</h2>
+              <div className="space-y-6">
+                <div className="h-80 w-4/5 bg-[#b29e97] rounded-md p-2 flex justify-center items-center overflow-scroll">
+                  {budgetSuggestions.length === 0 ? (
+                    <p>No suggestion generated yet.</p>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-4">
+                      {budgetSuggestions.map((meal, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          className="bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg p-6 hover:shadow-lg transition-shadow duration-300"
+                        >
+                          <h3 className="text-xl font-semibold mb-2">{meal.mealName}</h3>
+                          <p className="mb-2">{meal.description}</p>
+                          <p className="mb-2">
+                            <strong>Ingredients:</strong> {meal.ingredients}
+                          </p>
+                          <p className="mb-2">
+                            <strong>Calories:</strong> {meal.calories}
+                          </p>
+                          <p>
+                            <strong>Budget:</strong>{' '}
+                            {meal.budget !== 'N/A' ? `A$${meal.budget}` : 'N/A'}
+                          </p>
+                          <button
+                            onClick={() => handleSaveBudgetMeal(meal)}
+                            className="mt-4 bg-[var(--button-bg-color)] text-[var(--button-text-color)] py-2 px-4 rounded-full hover:bg-[var(--button-hover-color)] transition-all duration-300 font-semibold"
+                          >
+                            Save Meal
+                          </button>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Timeframe</label>
+                  <select
+                    value={timeframe}
+                    onChange={(e) => setTimeframe(e.target.value as 'monthly' | 'fortnightly')}
+                    className="w-full bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)]"
+                  >
+                    <option value="monthly">Monthly</option>
+                    <option value="fortnightly">Fortnightly</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Budget (A$)</label>
+                  <input
+                    type="number"
+                    value={budget}
+                    onChange={(e) => setBudget(e.target.value)}
+                    className="w-full bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)]"
+                    placeholder="Enter your budget"
+                  />
+                </div>
+                <button
+                  className="bg-[var(--button-bg-color)] text-[var(--button-text-color)] py-2 px-6 rounded-full hover:bg-[var(--button-hover-color)] transition-all duration-300 font-semibold"
+                  onClick={generateBudgetMealSuggestion}
+                >
+                  Generate
+                </button>
+              </div>
             </div>
           )}
         </div>
