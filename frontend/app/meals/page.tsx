@@ -13,6 +13,7 @@ interface Meal {
   ingredients: string;
   calories?: string;
   budget?: string;
+  timeframe?: string;
 }
 
 export default function MealsPage() {
@@ -25,6 +26,7 @@ export default function MealsPage() {
   const [ingredients, setIngredients] = useState('');
   const [calories, setCalories] = useState('');
   const [budget, setBudget] = useState('');
+  const [timeframe, setTimeframe] = useState('');
 
   const [savedMeals, setSavedMeals] = useState<Meal[]>([]);
   const [error, setError] = useState('');
@@ -45,6 +47,7 @@ export default function MealsPage() {
       ingredients,
       calories: calories || 'N/A',
       budget: budget || 'N/A',
+      timeframe: timeframe || 'N/A',
     };
 
     // Save meal to state
@@ -56,6 +59,7 @@ export default function MealsPage() {
     setIngredients('');
     setCalories('');
     setBudget('');
+    setTimeframe('');
     setError('');
     setSuccessMessage('Meal saved successfully!');
   };
@@ -170,10 +174,10 @@ export default function MealsPage() {
                   ></textarea>
                 </div>
 
-                {/* Calories and Budget */}
+                {/* Calories, Timeframe, and Budget */}
                 <div className="md:flex md:space-x-4">
                   {/* Calories */}
-                  <div className="md:w-1/2">
+                  <div className="md:w-1/3">
                     <label className="block text-sm font-medium mb-2">Calories</label>
                     <input
                       type="number"
@@ -184,8 +188,24 @@ export default function MealsPage() {
                     />
                   </div>
 
+                  {/* Timeframe */}
+                  <div className="md:w-1/3 mt-6 md:mt-0">
+                    <label className="block text-sm font-medium mb-2">
+                      Timeframe
+                    </label>
+                    <select
+                      value={timeframe}
+                      onChange={(e) => setTimeframe(e.target.value)}
+                      className="w-full bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)]"
+                    >
+                      <option value="" disabled>Select timeframe</option>
+                      <option value="Monthly">Monthly</option>
+                      <option value="Fortnightly">Fortnightly</option>
+                    </select>
+                  </div>
+
                   {/* Budget */}
-                  <div className="md:w-1/2 mt-6 md:mt-0">
+                  <div className="md:w-1/3 mt-6 md:mt-0">
                     <label className="block text-sm font-medium mb-2">
                       Approximate Budget (A$)
                     </label>
@@ -232,6 +252,9 @@ export default function MealsPage() {
                       </p>
                       <p className="mb-2">
                         <strong>Calories:</strong> {meal.calories}
+                      </p>
+                      <p className="mb-2">
+                        <strong>Timeframe:</strong> {meal.timeframe}
                       </p>
                       <p>
                         <strong>Budget:</strong>{' '}
