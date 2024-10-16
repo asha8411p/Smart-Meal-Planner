@@ -2,15 +2,16 @@
 
 "use client"; // Client-side component
 
-import { useState } from "react";
-import Header from '../components/ui/header'; // Adjust the path as needed
+import { useEffect, useState } from "react";
+import Header from "../components/ui/header"; // Adjust the path as needed
 import {
   FiPlusCircle,
   FiList,
   FiChevronLeft,
   FiChevronRight,
-} from 'react-icons/fi'; // Icons for sidebar
-import { motion } from 'framer-motion'; // For animations
+} from "react-icons/fi"; // Icons for sidebar
+import { motion } from "framer-motion"; // For animations
+import { jwtDecode } from "jwt-decode";
 
 interface Exercise {
   exerciseName: string;
@@ -20,45 +21,104 @@ interface Exercise {
 }
 
 export default function ExercisePage() {
-  const [activeTab, setActiveTab] = useState<'logExercise' | 'viewExercises'>('logExercise');
+  const [activeTab, setActiveTab] = useState<"logExercise" | "viewExercises">(
+    "logExercise"
+  );
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // State to control sidebar collapse
 
   // Form state variables
-  const [exerciseName, setExerciseName] = useState('');
-  const [description, setDescription] = useState('');
-  const [caloriesBurnedPerSet, setCaloriesBurnedPerSet] = useState('');
-  const [duration, setDuration] = useState('');
+  const [exerciseName, setExerciseName] = useState("");
+  const [description, setDescription] = useState("");
+  const [caloriesBurnedPerSet, setCaloriesBurnedPerSet] = useState("");
+  const [duration, setDuration] = useState("");
 
   const [savedExercises, setSavedExercises] = useState<Exercise[]>([]);
-  const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  interface DecodedToken {
+    id: string;
+    username: string;
+    name: string;
+  }
 
-  const handleSaveExercise = () => {
+  useEffect(() => {
+    const decodedToken = jwtDecode(
+      localStorage.getItem("token")!
+    ) as DecodedToken;
+    fetch("http://localhost:5000/exercise?userId=" + decodedToken.id, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => {
+        if (res.ok) {
+          return res.json();
+        } else {
+          throw new Error("Failed to fetch exercises.");
+        }
+      })
+      .then((data) => {
+        setSavedExercises(data);
+      })
+      .catch((err) => {
+        setError(err.message);
+      });
+  }, []);
+
+  const handleSaveExercise = async () => {
     // Validate mandatory inputs
     if (!exerciseName || !description || !caloriesBurnedPerSet) {
-      setError('Please fill in all mandatory fields.');
-      setSuccessMessage('');
+      setError("Please fill in all mandatory fields.");
+      setSuccessMessage("");
       return;
     }
+    const decodedToken = jwtDecode(
+      localStorage.getItem("token")!
+    ) as DecodedToken;
+    await fetch("http://localhost:5000/exercise", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: exerciseName,
+        description: description,
+        calories: caloriesBurnedPerSet,
+        duration: duration,
+        userId: decodedToken.id,
+      }),
+    })
+      .then((res) => {
+        if (res.ok) {
+          return res.json();
+        } else {
+          throw new Error("Failed to save exercise.");
+        }
+      })
+      .catch((err) => {
+        setError(err.message);
+        setSuccessMessage("");
+      });
 
     // Create exercise object
     const exercise: Exercise = {
       exerciseName,
       description,
       caloriesBurnedPerSet,
-      duration: duration || 'N/A',
+      duration: duration || "N/A",
     };
 
     // Save exercise to state
     setSavedExercises([...savedExercises, exercise]);
 
     // Clear form
-    setExerciseName('');
-    setDescription('');
-    setCaloriesBurnedPerSet('');
-    setDuration('');
-    setError('');
-    setSuccessMessage('Exercise saved successfully!');
+    setExerciseName("");
+    setDescription("");
+    setCaloriesBurnedPerSet("");
+    setDuration("");
+    setError("");
+    setSuccessMessage("Exercise saved successfully!");
   };
 
   return (
@@ -70,7 +130,7 @@ export default function ExercisePage() {
         {/* Sidebar */}
         <div
           className={`flex flex-col h-[calc(100vh-64px)] bg-[var(--input-bg-color)] p-4 transition-all duration-300 ${
-            sidebarCollapsed ? 'w-20' : 'w-64'
+            sidebarCollapsed ? "w-20" : "w-64"
           }`}
         >
           {/* Sidebar Header */}
@@ -84,21 +144,27 @@ export default function ExercisePage() {
           <ul className="flex-1">
             <li
               className={`cursor-pointer mb-4 flex items-center ${
-                activeTab === 'logExercise' ? 'text-[var(--focus-ring-color)] font-bold' : ''
+                activeTab === "logExercise"
+                  ? "text-[var(--focus-ring-color)] font-bold"
+                  : ""
               }`}
-              onClick={() => setActiveTab('logExercise')}
+              onClick={() => setActiveTab("logExercise")}
             >
               <FiPlusCircle className="text-xl" />
               {!sidebarCollapsed && <span className="ml-3">Log Exercise</span>}
             </li>
             <li
               className={`cursor-pointer mb-4 flex items-center ${
-                activeTab === 'viewExercises' ? 'text-[var(--focus-ring-color)] font-bold' : ''
+                activeTab === "viewExercises"
+                  ? "text-[var(--focus-ring-color)] font-bold"
+                  : ""
               }`}
-              onClick={() => setActiveTab('viewExercises')}
+              onClick={() => setActiveTab("viewExercises")}
             >
               <FiList className="text-xl" />
-              {!sidebarCollapsed && <span className="ml-3">View Saved Exercises</span>}
+              {!sidebarCollapsed && (
+                <span className="ml-3">View Saved Exercises</span>
+              )}
             </li>
           </ul>
 
@@ -108,7 +174,9 @@ export default function ExercisePage() {
               className="text-2xl focus:outline-none w-full flex items-center justify-center py-2 bg-[var(--input-border-color)] rounded-lg hover:bg-[var(--focus-ring-color)] transition-colors duration-300"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               aria-expanded={!sidebarCollapsed}
-              aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-label={
+                sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"
+              }
             >
               {sidebarCollapsed ? <FiChevronRight /> : <FiChevronLeft />}
             </button>
@@ -117,12 +185,14 @@ export default function ExercisePage() {
 
         {/* Main Content */}
         <div className="flex-1 p-8">
-          {activeTab === 'logExercise' && (
+          {activeTab === "logExercise" && (
             <div>
               <h2 className="text-3xl font-semibold mb-6">Log Exercise</h2>
 
               {error && <p className="text-red-500 mb-4">{error}</p>}
-              {successMessage && <p className="text-green-500 mb-4">{successMessage}</p>}
+              {successMessage && (
+                <p className="text-green-500 mb-4">{successMessage}</p>
+              )}
 
               <form
                 onSubmit={(e) => {
@@ -160,7 +230,8 @@ export default function ExercisePage() {
                 {/* Calories Burned per Set */}
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Calories Burned per Set <span className="text-red-500">*</span>
+                    Calories Burned per Set{" "}
+                    <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -172,7 +243,9 @@ export default function ExercisePage() {
 
                 {/* Duration */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">Duration (minutes)</label>
+                  <label className="block text-sm font-medium mb-2">
+                    Duration (minutes)
+                  </label>
                   <input
                     type="number"
                     value={duration}
@@ -193,10 +266,12 @@ export default function ExercisePage() {
             </div>
           )}
 
-          {activeTab === 'viewExercises' && (
+          {activeTab === "viewExercises" && (
             <div>
-              <h2 className="text-3xl font-semibold mb-6">View Saved Exercises</h2>
-              {savedExercises.length === 0 ? (
+              <h2 className="text-3xl font-semibold mb-6">
+                View Saved Exercises
+              </h2>
+              {!(savedExercises?.length > 0) ? (
                 <p>No exercises saved yet.</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -208,14 +283,19 @@ export default function ExercisePage() {
                       transition={{ delay: index * 0.1 }}
                       className="bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg p-6 hover:shadow-lg transition-shadow duration-300"
                     >
-                      <h3 className="text-xl font-semibold mb-2">{exercise.exerciseName}</h3>
+                      <h3 className="text-xl font-semibold mb-2">
+                        {exercise.exerciseName}
+                      </h3>
                       <p className="mb-2">{exercise.description}</p>
                       <p className="mb-2">
-                        <strong>Calories Burned per Set:</strong> {exercise.caloriesBurnedPerSet}
+                        <strong>Calories Burned per Set:</strong>{" "}
+                        {exercise.caloriesBurnedPerSet}
                       </p>
                       <p>
-                        <strong>Duration:</strong>{' '}
-                        {exercise.duration !== 'N/A' ? `${exercise.duration} minutes` : 'N/A'}
+                        <strong>Duration:</strong>{" "}
+                        {exercise.duration !== "N/A"
+                          ? `${exercise.duration} minutes`
+                          : "N/A"}
                       </p>
                     </motion.div>
                   ))}
