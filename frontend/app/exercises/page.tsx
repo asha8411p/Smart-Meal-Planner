@@ -2,15 +2,15 @@
 
 "use client"; // Client-side component
 
-import { useState } from "react";
-import Header from '../components/ui/header'; // Adjust the path as needed
+import { useEffect, useState } from "react";
+import Header from "../components/ui/header"; // Adjust the path as needed
 import {
   FiPlusCircle,
   FiList,
   FiChevronLeft,
   FiChevronRight,
-} from 'react-icons/fi'; // Icons for sidebar
-import { motion } from 'framer-motion'; // For animations
+} from "react-icons/fi"; // Icons for sidebar
+import { motion } from "framer-motion"; // For animations
 import { jwtDecode } from "jwt-decode";
 
 interface Exercise {
@@ -40,6 +40,31 @@ export default function ExercisePage() {
     username: string;
     name: string;
   }
+
+  useEffect(() => {
+    const decodedToken = jwtDecode(
+      localStorage.getItem("token")!
+    ) as DecodedToken;
+    fetch("http://localhost:5000/exercise?userId=" + decodedToken.id, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => {
+        if (res.ok) {
+          return res.json();
+        } else {
+          throw new Error("Failed to fetch exercises.");
+        }
+      })
+      .then((data) => {
+        setSavedExercises(data);
+      })
+      .catch((err) => {
+        setError(err.message);
+      });
+  }, []);
 
   const handleSaveExercise = async () => {
     // Validate mandatory inputs
@@ -246,7 +271,7 @@ export default function ExercisePage() {
               <h2 className="text-3xl font-semibold mb-6">
                 View Saved Exercises
               </h2>
-              {savedExercises.length === 0 ? (
+              {!(savedExercises?.length > 0) ? (
                 <p>No exercises saved yet.</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

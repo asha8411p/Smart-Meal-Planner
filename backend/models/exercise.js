@@ -15,4 +15,19 @@ async function addExercise(userId, name, description, calories, duration) {
   });
 }
 
-module.exports = { addExercise };
+async function getExercisesByUserId(userId) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `SELECT * FROM exercises WHERE user_id = ?`,
+      [userId],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        }
+        resolve(result);
+      }
+    );
+  });
+}
+
+module.exports = { addExercise, getExercisesByUserId };

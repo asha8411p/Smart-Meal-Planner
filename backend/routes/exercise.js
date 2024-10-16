@@ -19,6 +19,10 @@ router.post("", async (req, res) => {
 
   res.send("Exercise added to shopping list");
 });
-
+router.get("", async (req, res) => {
+  const userId = req.query.userId;
+  const exercises = await exerciseService.getExercises(userId);
+  res.send(JSON.stringify(exercises));
+});
 
 module.exports = router;
