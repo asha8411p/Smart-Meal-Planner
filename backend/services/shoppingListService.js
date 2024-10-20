@@ -1,6 +1,8 @@
 const {
   getShoppingListByUserId,
   addToShoppingList,
+  deleteIngredient,
+  updateIngredient,
 } = require("../models/shoppinglist");
 
 async function getShoppingList(userId) {
@@ -16,10 +18,21 @@ async function addIngredientToShoppingList(
   unit
 ) {
   // Add ingredient to shopping list
-  await addToShoppingList(userId, name, quantity, price, unit);
+  const item = await addToShoppingList(userId, name, quantity, price, unit);
+  return item[1].insertId; // the id of the ingredient added to the shopping list
+}
+
+async function deleteIngredientFromShoppingList(ingredientId) {
+  await deleteIngredient(ingredientId);
+}
+
+async function updateIngredientInShoppingList(id, name, quantity, price, unit) {
+  await updateIngredient(id, name, quantity, price, unit);
 }
 
 module.exports = {
   getShoppingList,
   addIngredientToShoppingList,
+  deleteIngredientFromShoppingList,
+  updateIngredientInShoppingList,
 };

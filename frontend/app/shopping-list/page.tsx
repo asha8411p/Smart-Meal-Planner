@@ -7,6 +7,7 @@ import { FaTrash } from "react-icons/fa";
 
 // Define the type for the items in the shopping list
 interface ShoppingItem {
+  id: number;
   name: string;
   quantity: string;
   unit: string;
@@ -69,7 +70,7 @@ export default function ShoppingList() {
       // Add a new empty row
       setItems([
         ...items,
-        { name: "", quantity: "", unit: "", price: "", checked: false },
+        { name: "", quantity: "", unit: "", price: "", checked: false, id: 0 },
       ]);
       setEditableRowIndex(items.length); // Set the new row as editable
     }
@@ -120,9 +121,10 @@ export default function ShoppingList() {
       )
         .then((response) => {
           if (response.ok) {
-            alert("Your shopping list has been saved.");
-          } else {
-            throw new Error("An error occurred. Please try again.");
+            response.json().then((data) => {
+              items[editableRowIndex].id = data.id;
+              setItems(items);
+            });
           }
         })
         .catch((error) => {
@@ -130,6 +132,14 @@ export default function ShoppingList() {
           alert("An error occurred. Please try again.");
         });
     } else if (isModifying) {
+      const modifiedItems = items.filter(
+        (item, index) =>
+          originalItems &&
+          (item.name !== originalItems[index].name ||
+            item.quantity !== originalItems[index].quantity ||
+            item.unit !== originalItems[index].unit ||
+            item.price !== originalItems[index].price)
+      );
       // Validate all items during modifying mode
       const hasEmptyFields = items.some(
         (item) => !item.name || !item.quantity || !item.unit
@@ -138,6 +148,31 @@ export default function ShoppingList() {
         alert("Error: Name, Quantity, and unit are mandatory fields.");
         return;
       }
+      if (modifiedItems.length === 0) {
+        alert("No changes detected.");
+        return;
+      }
+      await Promise.all(
+        modifiedItems.map((item) =>
+          fetch("http://localhost:5000/shopping-list", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify(item),
+          })
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error("An error occurred. Please try again.");
+              }
+            })
+            .catch((error) => {
+              console.error(error);
+              alert("An error occurred. Please try again.");
+            })
+        )
+      );
     }
 
     // Save changes
@@ -148,7 +183,27 @@ export default function ShoppingList() {
   };
 
   // Handle removing a row
-  const handleRemoveRow = (index: number) => {
+  const handleRemoveRow = async (index: number, item: ShoppingItem) => {
+    await fetch("http://localhost:5000/shopping-list?id=" + item.id, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify(item),
+    })
+      .then((response) => {
+        if (response.ok) {
+          alert("The item has been removed.");
+        } else {
+          throw new Error("An error occurred. Please try again.");
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        alert("An error occurred. Please try again.");
+      });
+
     const updatedItems = items.filter((_, i) => i !== index);
     setItems(updatedItems);
     if (isAdding && index === editableRowIndex) {
@@ -233,7 +288,7 @@ export default function ShoppingList() {
             <table className="min-w-full bg-[var(--container-bg-color)] rounded-lg text-[var(--foreground-color)] table-auto">
               <thead>
                 <tr className="text-left bg-[var(--table-header-bg-color)] text-[var(--table-header-text-color)]">
-                  {isModifying && <th className="px-4 py-2 w-1/12">Remove</th>}
+                  <th className="px-4 py-2 w-1/12">Remove</th>
                   <th className="px-4 py-2 w-1/5">Ingredient Name</th>
                   <th className="px-4 py-2 w-1/5">Quantity</th>
                   <th className="px-4 py-2 w-1/5">unit</th>
@@ -248,16 +303,14 @@ export default function ShoppingList() {
                       key={index}
                       className="border-t border-[var(--table-border-color)]"
                     >
-                      {isModifying && (
-                        <td className="px-4 py-2 text-center">
-                          <button
-                            className="bg-transparent hover:bg-red-600 text-white rounded-full p-2 transition-all duration-300"
-                            onClick={() => handleRemoveRow(index)}
-                          >
-                            <FaTrash size={16} />
-                          </button>
-                        </td>
-                      )}
+                      <td className="px-4 py-2 text-center">
+                        <button
+                          className="bg-transparent hover:bg-red-600 text-white rounded-full p-2 transition-all duration-300 display flex items-center justify-center"
+                          onClick={() => handleRemoveRow(index, item)}
+                        >
+                          <FaTrash size={16} />
+                        </button>
+                      </td>
                       <td className="px-4 py-2 align-top">
                         {isModifying ||
                         (isAdding && index === editableRowIndex) ? (
