@@ -31,4 +31,35 @@ async function addToShoppingList(userId, name, quantity, price, unit) {
   });
 }
 
-module.exports = { getShoppingListByUserId, addToShoppingList };
+async function deleteIngredient(id) {
+  return new Promise((resolve, reject) => {
+    db.query(`DELETE FROM shopping_list WHERE id = ?`, [id], (err, result) => {
+      if (err) {
+        return reject(err);
+      }
+      resolve(result);
+    });
+  });
+}
+
+async function updateIngredient(id, name, quantity, price, unit) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `UPDATE ingredients SET name = ?, quantity = ?, price = ?, unit = ? WHERE id = ?`,
+      [name, quantity, price, unit, id],
+      (err, result) => {
+        if (err) {
+          return reject(err);
+        }
+        resolve(result);
+      }
+    );
+  });
+}
+
+module.exports = {
+  getShoppingListByUserId,
+  addToShoppingList,
+  deleteIngredient,
+  updateIngredient,
+};
