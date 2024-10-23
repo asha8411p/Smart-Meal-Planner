@@ -3,6 +3,8 @@ import { useState } from "react";
 import Header from "../components/ui/header";
 import { Exercise } from "../../types/exercise";
 import { Meal } from "../../types/meal";
+import { jwtDecode } from "jwt-decode";
+import { DecodedToken } from "../../types/decodedToken";
 
 export default function Home() {
   const [suggestions, setSuggestions] = useState("No suggestion generated yet");
@@ -11,6 +13,34 @@ export default function Home() {
     "meal"
   );
   const [mealSuggestion, setMealSuggestion] = useState<Meal>();
+  async function saveSuggestion() {
+    const decodedToken = jwtDecode(
+      localStorage.getItem("token")!
+    ) as DecodedToken;
+    if (suggestionType === "meal") {
+      //add meal suggestion to the database with ingredients
+    }
+    if (suggestionType === "exercise") {
+      await fetch("http://localhost:5000/exercise?userId=" + decodedToken.id, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(exerciseSuggestions),
+      })
+        .then((response) => {
+          if (response.ok) {
+            return response;
+          } else {
+            throw new Error("An error occurred. Please try again.");
+          }
+        })
+        .then((data) => {
+          console.log(data);
+        });
+    }
+  }
   async function generateMealSuggestion() {
     setSuggestions("Loading...");
     setSuggestionType("meal");
@@ -122,6 +152,7 @@ export default function Home() {
         >
           Generate Exercises
         </button>
+        <button onClick={saveSuggestion}>Save suggestion</button>
       </div>
     </div>
   );

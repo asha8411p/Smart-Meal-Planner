@@ -4,6 +4,7 @@ import Header from "@/components/ui/header";
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import { FaTrash } from "react-icons/fa";
+import { DecodedToken } from "../../types/decodedToken";
 
 // Define the type for the items in the shopping list
 interface ShoppingItem {
@@ -13,11 +14,6 @@ interface ShoppingItem {
   unit: string;
   price: string;
   checked: boolean;
-}
-interface DecodedToken {
-  id: string;
-  username: string;
-  name: string;
 }
 
 export default function ShoppingList() {

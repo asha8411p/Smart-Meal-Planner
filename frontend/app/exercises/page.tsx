@@ -13,6 +13,7 @@ import {
 import { motion } from "framer-motion"; // For animations
 import { jwtDecode } from "jwt-decode";
 import { Exercise } from "../../types/exercise";
+import { DecodedToken } from "../../types/decodedToken";
 
 export default function ExercisePage() {
   const [activeTab, setActiveTab] = useState<"logExercise" | "viewExercises">(
@@ -29,11 +30,6 @@ export default function ExercisePage() {
   const [savedExercises, setSavedExercises] = useState<Exercise[]>([]);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  interface DecodedToken {
-    id: string;
-    username: string;
-    name: string;
-  }
 
   useEffect(() => {
     const decodedToken = jwtDecode(
