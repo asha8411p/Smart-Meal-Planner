@@ -12,13 +12,7 @@ import {
 } from "react-icons/fi"; // Icons for sidebar
 import { motion } from "framer-motion"; // For animations
 import { jwtDecode } from "jwt-decode";
-
-interface Exercise {
-  exerciseName: string;
-  description: string;
-  caloriesBurnedPerSet: string;
-  duration?: string;
-}
+import { Exercise } from "../../types/exercise";
 
 export default function ExercisePage() {
   const [activeTab, setActiveTab] = useState<"logExercise" | "viewExercises">(
@@ -103,10 +97,11 @@ export default function ExercisePage() {
 
     // Create exercise object
     const exercise: Exercise = {
-      exerciseName,
+      name: exerciseName,
       description,
-      caloriesBurnedPerSet,
+      calories: caloriesBurnedPerSet,
       duration: duration || "N/A",
+      id: 0,
     };
 
     // Save exercise to state
@@ -284,12 +279,12 @@ export default function ExercisePage() {
                       className="bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg p-6 hover:shadow-lg transition-shadow duration-300"
                     >
                       <h3 className="text-xl font-semibold mb-2">
-                        {exercise.exerciseName}
+                        {exercise.name}
                       </h3>
                       <p className="mb-2">{exercise.description}</p>
                       <p className="mb-2">
                         <strong>Calories Burned per Set:</strong>{" "}
-                        {exercise.caloriesBurnedPerSet}
+                        {exercise.calories}
                       </p>
                       <p>
                         <strong>Duration:</strong>{" "}
