@@ -9,7 +9,7 @@ router.get("/suggestion", async (req, res) => {
   res.send(JSON.stringify(exercise));
 });
 router.post("", async (req, res) => {
-  const userId = req.body.userId;
+  const userId = req.query.userId;
   const name = req.body.name;
   const description = req.body.description;
   const calories = req.body.calories;
