@@ -22,6 +22,7 @@ function setupTables() {
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     name VARCHAR(255) NOT NULL,
+    instructions VARCHAR(2048) NOT NULL,
     calories FLOAT NOT NULL,
     date DATE NOT NULL,
     budget FLOAT NOT NULL,

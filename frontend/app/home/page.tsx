@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Header from "../components/ui/header";
 import { Exercise } from "../../types/exercise";
+import { Meal } from "../../types/meal";
 
 export default function Home() {
   const [suggestions, setSuggestions] = useState("No suggestion generated yet");
@@ -9,6 +10,7 @@ export default function Home() {
   const [suggestionType, setSuggestionType] = useState<"meal" | "exercise">(
     "meal"
   );
+  const [mealSuggestion, setMealSuggestion] = useState<Meal>();
   async function generateMealSuggestion() {
     setSuggestions("Loading...");
     setSuggestionType("meal");
@@ -27,7 +29,8 @@ export default function Home() {
         }
       })
       .then((data) => {
-        setSuggestions(data);
+        setMealSuggestion(JSON.parse(data));
+        setSuggestions(data.name);
       });
   }
 
@@ -64,7 +67,23 @@ export default function Home() {
           suggestions != "No suggestion generated yet" && (
             <div className="text-center">
               <h1 className="text-3xl font-semibold">Meal Suggestion</h1>
-              <p className="text-lg">{suggestions}</p>
+              <h3 className="text-lg">{mealSuggestion?.name}</h3>
+              <p className="text-lg">{mealSuggestion?.instructions}</p>
+              <p className="text-lg">
+                Calories: {mealSuggestion?.calories} kcal
+              </p>
+              <h3 className="text-lg">Ingredients:</h3>
+              <ul className="text-lg">
+                {mealSuggestion?.ingredients?.map((ingredient) => (
+                  <li
+                    key={
+                      ingredient.name + ingredient.unit + ingredient.quantity
+                    }
+                  >
+                    {ingredient.name}: {ingredient.quantity} {ingredient.unit}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         {suggestionType === "exercise" && exerciseSuggestions != null && (
@@ -75,7 +94,9 @@ export default function Home() {
             <p className="text-lg">
               Calories burned: {exerciseSuggestions?.calories} kcal
             </p>
-            <p className="text-lg">Duration: {exerciseSuggestions?.duration} minutes</p>
+            <p className="text-lg">
+              Duration: {exerciseSuggestions?.duration} minutes
+            </p>
           </div>
         )}
         {suggestions === "No suggestion generated yet" && (
