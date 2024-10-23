@@ -1,12 +1,17 @@
 "use client";
 import { useState } from "react";
 import Header from "../components/ui/header";
+import { Exercise } from "../../types/exercise";
 
 export default function Home() {
   const [suggestions, setSuggestions] = useState("No suggestion generated yet");
-
+  const [exerciseSuggestions, setExerciseSuggestions] = useState<Exercise>();
+  const [suggestionType, setSuggestionType] = useState<"meal" | "exercise">(
+    "meal"
+  );
   async function generateMealSuggestion() {
     setSuggestions("Loading...");
+    setSuggestionType("meal");
     await fetch("http://localhost:5000/meal/suggestion", {
       method: "GET",
       headers: {
@@ -28,6 +33,7 @@ export default function Home() {
 
   async function generateExerciseSuggestion() {
     setSuggestions("Loading...");
+    setSuggestionType("exercise");
     await fetch("http://localhost:5000/exercise/suggestion", {
       method: "GET",
       headers: {
@@ -44,6 +50,7 @@ export default function Home() {
       })
       .then((data) => {
         setSuggestions(data);
+        setExerciseSuggestions(data);
       });
   }
 
@@ -51,12 +58,33 @@ export default function Home() {
     <div className="bg-[var(--background-color)] text-[var(--foreground-color)] min-h-screen flex flex-col items-center justify-center p-8 space-y-8">
       {/* Include the Header component here */}
       <Header />
-
-      {/* Suggestions Box with increased size and scroll */}
       <div className="w-full max-w-5xl bg-[var(--input-bg-color)] text-[var(--input-text-color)] rounded-xl shadow-lg p-6 h-80 md:h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-rounded-full scrollbar-thumb-[var(--focus-ring-color)]">
-        <p className="text-lg font-medium leading-relaxed whitespace-pre-line">
-          {suggestions}
-        </p>
+        {suggestionType === "meal" &&
+          suggestions != "" &&
+          suggestions != "No suggestion generated yet" && (
+            <div className="text-center">
+              <h1 className="text-3xl font-semibold">Meal Suggestion</h1>
+              <p className="text-lg">{suggestions}</p>
+            </div>
+          )}
+        {suggestionType === "exercise" && exerciseSuggestions != null && (
+          <div className="text-center">
+            <h1 className="text-3xl font-semibold">Exercise Suggestion</h1>
+            <h3 className="text-lg">{exerciseSuggestions?.name}</h3>
+            <p className="text-lg">{exerciseSuggestions?.description}</p>
+            <p className="text-lg">
+              Calories burned: {exerciseSuggestions?.calories} kcal
+            </p>
+            <p className="text-lg">Duration: {exerciseSuggestions?.duration} minutes</p>
+          </div>
+        )}
+        {suggestions === "No suggestion generated yet" && (
+          <div className="text-center">
+            <h1 className="text-3xl font-semibold">
+              No suggestion generated yet
+            </h1>
+          </div>
+        )}
       </div>
 
       {/* Action Buttons */}
