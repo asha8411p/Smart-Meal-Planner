@@ -1,4 +1,7 @@
-const { addIngredient } = require("../models/ingredient");
+const {
+  addIngredient,
+  getIngredientsByMealId,
+} = require("../models/ingredient");
 const meals = require("../models/meal");
 
 async function saveMeal(userId, name, calories, date, budget, instructions) {
@@ -15,6 +18,12 @@ async function saveMeal(userId, name, calories, date, budget, instructions) {
 
 async function getMeals(userId) {
   const saved_meals = await meals.getMealsByUserId(userId);
+  await Promise.all(
+    saved_meals.map(async (meal) => {
+      const ingredients = await getIngredientsByMealId(meal.id);
+      meal.ingredients = ingredients;
+    })
+  );
   return saved_meals;
 }
 

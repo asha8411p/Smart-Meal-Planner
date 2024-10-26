@@ -18,8 +18,6 @@ export default function Home() {
       localStorage.getItem("token")!
     ) as DecodedToken;
     if (suggestionType === "meal") {
-      console.log("ingredients: ", mealSuggestion?.ingredients);
-      console.log("budget: ", mealSuggestion?.budget);
       await fetch("http://localhost:5000/meal", {
         method: "POST",
         headers: {
