@@ -4,6 +4,7 @@ export type Meal = {
   instructions: string;
   calories: string;
   ingredients: Ingredient[];
+  budget?: number;
 };
 
 export type Ingredient = {
@@ -11,4 +12,5 @@ export type Ingredient = {
   name: string;
   quantity: string;
   unit: string;
+  price: number;
 };

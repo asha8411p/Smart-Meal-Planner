@@ -1,52 +1,75 @@
 "use client"; // Client-side component
 
-import { useState } from "react";
-import Header from '../components/ui/header'; // Adjust the path as needed
-import { FiPlusCircle, FiList, FiChevronLeft, FiChevronRight } from 'react-icons/fi'; // Icons for sidebar
-import { motion } from 'framer-motion'; // For animations
-
-interface Ingredient {
-  name: string;
-  unit: string;
-  quantity: string;
-  price: string;
-}
-
-interface Meal {
-  mealName: string;
-  description: string;
-  ingredients: Ingredient[];
-  calories?: string;
-  budget?: string;
-}
+import { useEffect, useState } from "react";
+import Header from "../components/ui/header"; // Adjust the path as needed
+import {
+  FiPlusCircle,
+  FiList,
+  FiChevronLeft,
+  FiChevronRight,
+} from "react-icons/fi"; // Icons for sidebar
+import { motion } from "framer-motion"; // For animations
+import { DecodedToken } from "../../types/decodedToken";
+import { jwtDecode } from "jwt-decode";
+import { Ingredient, Meal } from "../../types/meal";
 
 export default function MealsPage() {
-  const [activeTab, setActiveTab] = useState<'logMeal' | 'viewMeals' | 'budgetMeal'>('logMeal');
+  const [activeTab, setActiveTab] = useState<
+    "logMeal" | "viewMeals" | "budgetMeal"
+  >("logMeal");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // State to control sidebar collapse
 
   // Form state variables
-  const [mealName, setMealName] = useState('');
-  const [description, setDescription] = useState('');
-  const [calories, setCalories] = useState('');
-  const [budget, setBudget] = useState('');
+  const [mealName, setMealName] = useState("");
+  const [instructions, setInstructions] = useState("");
+  const [calories, setCalories] = useState(0);
+  const [budget, setBudget] = useState(0);
   const [ingredients, setIngredients] = useState<Ingredient[]>([
-    { name: "", unit: "", quantity: "", price: "" }
+    { name: "", unit: "", quantity: "", price: 0, id: 0 },
   ]);
 
   const [savedMeals, setSavedMeals] = useState<Meal[]>([]);
-  const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [budgetSuggestions, setBudgetSuggestions] = useState<Meal[]>([]);
   const [timeframe, setTimeframe] = useState<'monthly' | 'fortnightly'>('monthly');
 
-  const handleInputChange = (index: number, field: keyof Ingredient, value: string) => {
+  useEffect(() => {
+    const decodedToken = jwtDecode(
+      localStorage.getItem("token")!
+    ) as DecodedToken;
+    fetch("http://localhost:5000/meal?userId=" + decodedToken.id, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error("An error occurred. Please try again.");
+        }
+      })
+      .then((data) => {
+        setSavedMeals(data);
+      });
+  }, []);
+
+  const handleInputChange = (
+    index: number,
+    field: keyof Ingredient,
+    value: string
+  ) => {
     const updatedIngredients = [...ingredients];
     updatedIngredients[index][field] = value;
     setIngredients(updatedIngredients);
   };
 
   const addIngredientRow = () => {
-    setIngredients([...ingredients, { name: "", unit: "", quantity: "", price: "" }]);
+    setIngredients([
+      ...ingredients,
+      { name: "", unit: "", quantity: "", price: 0, id: ingredients.length },
+    ]);
   };
 
   const removeIngredientRow = (index: number) => {
@@ -54,34 +77,70 @@ export default function MealsPage() {
     setIngredients(updatedIngredients);
   };
 
-  const handleSaveMeal = () => {
+  const handleSaveMeal = async () => {
     // Validate mandatory inputs
-    if (!mealName || !description || ingredients.some(ingredient => !ingredient.name || !ingredient.unit || !ingredient.quantity || !ingredient.price)) {
-      setError('Please fill in all mandatory fields for the meal and ingredients.');
-      setSuccessMessage('');
+    if (
+      !mealName ||
+      !instructions ||
+      ingredients.some(
+        (ingredient) =>
+          !ingredient.name ||
+          !ingredient.unit ||
+          !ingredient.quantity ||
+          !ingredient.price
+      )
+    ) {
+      setError(
+        "Please fill in all mandatory fields for the meal and ingredients."
+      );
+      setSuccessMessage("");
       return;
     }
 
     // Create meal object
     const meal: Meal = {
       mealName,
-      description,
+      instructions,
       ingredients,
-      calories: calories || 'N/A',
-      budget: budget || 'N/A',
+      calories: calories || 0,
+      budget: budget || 0,
     };
+    const decodedToken = jwtDecode(
+      localStorage.getItem("token")!
+    ) as DecodedToken;
+    await fetch("http://localhost:5000/meal", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify({
+        userId: decodedToken.id,
+        name: meal.name,
+        instructions: meal.instructions,
+        calories: meal.calories,
+        ingredients: meal.ingredients,
+        budget: meal.budget,
+      }),
+    }).then((response) => {
+      if (response.ok) {
+        return response.json();
+      } else {
+        throw new Error("An error occurred. Please try again.");
+      }
+    });
 
     // Save meal to state
     setSavedMeals([...savedMeals, meal]);
 
     // Clear form
-    setMealName('');
-    setDescription('');
-    setIngredients([{ name: "", unit: "", quantity: "", price: "" }]);
-    setCalories('');
-    setBudget('');
-    setError('');
-    setSuccessMessage('Meal saved successfully!');
+    setMealName("");
+    setInstructions("");
+    setIngredients([{ name: "", unit: "", quantity: "", price: 0, id: 0 }]);
+    setCalories(0);
+    setBudget(0);
+    setError("");
+    setSuccessMessage("Meal saved successfully!");
   };
 
   const generateBudgetMealSuggestion = async () => {
@@ -118,7 +177,7 @@ export default function MealsPage() {
         {/* Sidebar */}
         <div
           className={`flex flex-col h-[calc(100vh-64px)] bg-[var(--input-bg-color)] p-4 transition-all duration-300 ${
-            sidebarCollapsed ? 'w-20' : 'w-64'
+            sidebarCollapsed ? "w-20" : "w-64"
           }`}
         >
           {/* Sidebar Header */}
@@ -132,27 +191,35 @@ export default function MealsPage() {
           <ul className="flex-1">
             <li
               className={`cursor-pointer mb-4 flex items-center ${
-                activeTab === 'logMeal' ? 'text-[var(--focus-ring-color)] font-bold' : ''
+                activeTab === "logMeal"
+                  ? "text-[var(--focus-ring-color)] font-bold"
+                  : ""
               }`}
-              onClick={() => setActiveTab('logMeal')}
+              onClick={() => setActiveTab("logMeal")}
             >
               <FiPlusCircle className="text-xl" />
               {!sidebarCollapsed && <span className="ml-3">Log Meal</span>}
             </li>
             <li
               className={`cursor-pointer mb-4 flex items-center ${
-                activeTab === 'viewMeals' ? 'text-[var(--focus-ring-color)] font-bold' : ''
+                activeTab === "viewMeals"
+                  ? "text-[var(--focus-ring-color)] font-bold"
+                  : ""
               }`}
-              onClick={() => setActiveTab('viewMeals')}
+              onClick={() => setActiveTab("viewMeals")}
             >
               <FiList className="text-xl" />
-              {!sidebarCollapsed && <span className="ml-3">View Saved Meals</span>}
+              {!sidebarCollapsed && (
+                <span className="ml-3">View Saved Meals</span>
+              )}
             </li>
             <li
               className={`cursor-pointer mb-4 flex items-center ${
-                activeTab === 'budgetMeal' ? 'text-[var(--focus-ring-color)] font-bold' : ''
+                activeTab === "budgetMeal"
+                  ? "text-[var(--focus-ring-color)] font-bold"
+                  : ""
               }`}
-              onClick={() => setActiveTab('budgetMeal')}
+              onClick={() => setActiveTab("budgetMeal")}
             >
               <FiList className="text-xl" />
               {!sidebarCollapsed && <span className="ml-3">Budget Meal</span>}
@@ -165,7 +232,9 @@ export default function MealsPage() {
               className="text-2xl focus:outline-none w-full flex items-center justify-center py-2 bg-[var(--input-border-color)] rounded-lg hover:bg-[var(--focus-ring-color)] transition-colors duration-300"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               aria-expanded={!sidebarCollapsed}
-              aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-label={
+                sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"
+              }
             >
               {sidebarCollapsed ? <FiChevronRight /> : <FiChevronLeft />}
             </button>
@@ -174,12 +243,14 @@ export default function MealsPage() {
 
         {/* Main Content */}
         <div className="flex-1 p-8">
-          {activeTab === 'logMeal' && (
+          {activeTab === "logMeal" && (
             <div>
               <h2 className="text-3xl font-semibold mb-6">Log Meal</h2>
 
               {error && <p className="text-red-500 mb-4">{error}</p>}
-              {successMessage && <p className="text-green-500 mb-4">{successMessage}</p>}
+              {successMessage && (
+                <p className="text-green-500 mb-4">{successMessage}</p>
+              )}
 
               <form
                 onSubmit={(e) => {
@@ -204,11 +275,11 @@ export default function MealsPage() {
                 {/* Description */}
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Description <span className="text-red-500">*</span>
+                    Instructions <span className="text-red-500">*</span>
                   </label>
                   <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
+                    value={instructions}
+                    onChange={(e) => setInstructions(e.target.value)}
                     className="w-full bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)]"
                     rows={3}
                   ></textarea>
@@ -236,7 +307,9 @@ export default function MealsPage() {
                             <input
                               type="text"
                               value={ingredient.name}
-                              onChange={(e) => handleInputChange(index, "name", e.target.value)}
+                              onChange={(e) =>
+                                handleInputChange(index, "name", e.target.value)
+                              }
                               className="w-full bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg px-2 py-1"
                             />
                           </td>
@@ -244,7 +317,9 @@ export default function MealsPage() {
                             <input
                               type="text"
                               value={ingredient.unit}
-                              onChange={(e) => handleInputChange(index, "unit", e.target.value)}
+                              onChange={(e) =>
+                                handleInputChange(index, "unit", e.target.value)
+                              }
                               className="w-full bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg px-2 py-1"
                             />
                           </td>
@@ -252,7 +327,13 @@ export default function MealsPage() {
                             <input
                               type="text"
                               value={ingredient.quantity}
-                              onChange={(e) => handleInputChange(index, "quantity", e.target.value)}
+                              onChange={(e) =>
+                                handleInputChange(
+                                  index,
+                                  "quantity",
+                                  e.target.value
+                                )
+                              }
                               className="w-full bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg px-2 py-1"
                             />
                           </td>
@@ -260,7 +341,13 @@ export default function MealsPage() {
                             <input
                               type="text"
                               value={ingredient.price}
-                              onChange={(e) => handleInputChange(index, "price", e.target.value)}
+                              onChange={(e) =>
+                                handleInputChange(
+                                  index,
+                                  "price",
+                                  e.target.value
+                                )
+                              }
                               className="w-full bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg px-2 py-1"
                             />
                           </td>
@@ -291,11 +378,13 @@ export default function MealsPage() {
                 <div className="md:flex md:space-x-4">
                   {/* Calories */}
                   <div className="md:w-1/2">
-                    <label className="block text-sm font-medium mb-2">Calories</label>
+                    <label className="block text-sm font-medium mb-2">
+                      Calories
+                    </label>
                     <input
                       type="number"
                       value={calories}
-                      onChange={(e) => setCalories(e.target.value)}
+                      onChange={(e) => setCalories(parseFloat(e.target.value))}
                       className="w-full bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)]"
                       placeholder="Optional"
                     />
@@ -309,7 +398,7 @@ export default function MealsPage() {
                     <input
                       type="number"
                       value={budget}
-                      onChange={(e) => setBudget(e.target.value)}
+                      onChange={(e) => setBudget(parseFloat(e.target.value))}
                       className="w-full bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)]"
                       placeholder="Optional"
                     />
@@ -327,7 +416,7 @@ export default function MealsPage() {
             </div>
           )}
 
-          {activeTab === 'viewMeals' && (
+          {activeTab === "viewMeals" && (
             <div>
               <h2 className="text-3xl font-semibold mb-6">View Saved Meals</h2>
               {savedMeals.length === 0 ? (
@@ -342,17 +431,24 @@ export default function MealsPage() {
                       transition={{ delay: index * 0.1 }}
                       className="bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg p-6 hover:shadow-lg transition-shadow duration-300"
                     >
-                      <h3 className="text-xl font-semibold mb-2">{meal.mealName}</h3>
-                      <p className="mb-2">{meal.description}</p>
+                      <h3 className="text-xl font-semibold mb-2">
+                        {meal.name}
+                      </h3>
+                      <p className="mb-2">{meal.instructions}</p>
                       <p className="mb-2">
-                        <strong>Ingredients:</strong> {meal.ingredients.map(ing => `${ing.name} (${ing.quantity} ${ing.unit})`).join(', ')}
+                        <strong>Ingredients:</strong>{" "}
+                        {meal.ingredients &&
+                          meal.ingredients
+                            .map((ing) => {
+                              return `${ing.name} (${ing.quantity} ${ing.unit})`;
+                            })
+                            .join(", ")}
                       </p>
                       <p className="mb-2">
                         <strong>Calories:</strong> {meal.calories}
                       </p>
                       <p>
-                        <strong>Budget:</strong>{' '}
-                        {meal.budget !== 'N/A' ? `A$${meal.budget}` : 'N/A'}
+                        <strong>Budget:</strong> {`A$${meal.budget}`}
                       </p>
                     </motion.div>
                   ))}
@@ -361,7 +457,7 @@ export default function MealsPage() {
             </div>
           )}
 
-          {activeTab === 'budgetMeal' && (
+          {activeTab === "budgetMeal" && (
             <div>
               <h2 className="text-3xl font-semibold mb-6">Budget Meal</h2>
               <div className="space-y-6">
@@ -378,20 +474,27 @@ export default function MealsPage() {
                           transition={{ delay: index * 0.1 }}
                           className="bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg p-6 hover:shadow-lg transition-shadow duration-300"
                         >
-                          <h3 className="text-xl font-semibold mb-2">{meal.mealName}</h3>
-                          <p className="mb-2">{meal.description}</p>
+                          <h3 className="text-xl font-semibold mb-2">
+                            {meal.name}
+                          </h3>
+                          <p className="mb-2">{meal.instructions}</p>
                           <p className="mb-2">
-                            <strong>Ingredients:</strong> {meal.ingredients.map(ing => `${ing.name} (${ing.quantity} ${ing.unit})`).join(', ')}
+                            <strong>Ingredients:</strong>{" "}
+                            {meal.ingredients
+                              .map(
+                                (ing) =>
+                                  `${ing.name} (${ing.quantity} ${ing.unit})`
+                              )
+                              .join(", ")}
                           </p>
                           <p className="mb-2">
                             <strong>Calories:</strong> {meal.calories}
                           </p>
                           <p>
-                            <strong>Budget:</strong>{' '}
-                            {meal.budget !== 'N/A' ? `A$${meal.budget}` : 'N/A'}
+                            <strong>Budget:</strong> {`A$${meal.budget}`}
                           </p>
                           <button
-                            onClick={() => handleSaveBudgetMeal(meal)}
+                            onClick={handleSaveMeal}
                             className="mt-4 bg-[var(--button-bg-color)] text-[var(--button-text-color)] py-2 px-4 rounded-full hover:bg-[var(--button-hover-color)] transition-all duration-300 font-semibold"
                           >
                             Save Meal
@@ -402,10 +505,14 @@ export default function MealsPage() {
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Timeframe</label>
+                  <label className="block text-sm font-medium mb-2">
+                    Timeframe
+                  </label>
                   <select
                     value={timeframe}
-                    onChange={(e) => setTimeframe(e.target.value as 'monthly' | 'fortnightly')}
+                    onChange={(e) =>
+                      setTimeframe(e.target.value as "monthly" | "fortnightly")
+                    }
                     className="w-full bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)]"
                   >
                     <option value="monthly">Monthly</option>
@@ -413,11 +520,13 @@ export default function MealsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Budget (A$)</label>
+                  <label className="block text-sm font-medium mb-2">
+                    Budget (A$)
+                  </label>
                   <input
                     type="number"
                     value={budget}
-                    onChange={(e) => setBudget(e.target.value)}
+                    onChange={(e) => setBudget(parseFloat(e.target.value))}
                     className="w-full bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)]"
                     placeholder="Enter your budget"
                   />

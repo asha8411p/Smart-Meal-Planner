@@ -18,7 +18,34 @@ export default function Home() {
       localStorage.getItem("token")!
     ) as DecodedToken;
     if (suggestionType === "meal") {
-      //add meal suggestion to the database with ingredients
+      await fetch("http://localhost:5000/meal", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          userId: decodedToken.id,
+          name: mealSuggestion?.name,
+          instructions: mealSuggestion?.instructions,
+          calories: mealSuggestion?.calories,
+          ingredients: mealSuggestion?.ingredients,
+          budget: mealSuggestion?.ingredients.reduce(
+            (acc, ingredient) => acc + ingredient.price,
+            0
+          ),
+        }),
+      })
+        .then((response) => {
+          if (response.ok) {
+            return response;
+          } else {
+            throw new Error("An error occurred. Please try again.");
+          }
+        })
+        .then((data) => {
+          console.log(data);
+        });
     }
     if (suggestionType === "exercise") {
       await fetch("http://localhost:5000/exercise?userId=" + decodedToken.id, {

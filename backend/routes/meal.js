@@ -13,17 +13,30 @@ router.post("", async (req, res) => {
   const userId = req.body.userId;
   const name = req.body.name;
   const calories = req.body.calories;
-  const date = req.body.date;
+  const date = new Date(); // replace this later if we are scheduling meals
   const budget = req.body.budget;
+  const instructions = req.body.instructions;
+  const ingredients = req.body.ingredients;
+  console.log(userId, name, calories, date, budget, instructions);
 
-  mealService.saveMeal(userId, name, calories, date, budget);
+  const meal = await mealService.saveMeal(
+    userId,
+    name,
+    calories,
+    date,
+    budget,
+    instructions
+  );
+  console.log(meal);
+  await mealService.addIngredientsToMeal(meal.insertId, ingredients);
 
-  res.send("Meal added to shopping list");
+  res.send(meal);
 });
+
 router.get("", async (req, res) => {
   const userId = req.query.userId;
-  const meal = await mealService.getMeals(userId);
-  res.send(JSON.stringify(meal));
+  const meals = await mealService.getMeals(userId);
+  res.send(JSON.stringify(meals));
 });
 
 module.exports = router;

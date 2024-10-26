@@ -1,10 +1,10 @@
 const db = require("../db/connection");
 
-async function addMeal(userId, name, calories, date, budget, instructions) {
+async function addIngredient(name, mealId, quantity, unit, price) {
   return new Promise((resolve, reject) => {
     db.query(
-      `INSERT INTO meals (user_id, name, calories, date, budget, instructions) VALUES (?, ?, ?, ?, ?, ?)`,
-      [userId, name, calories, date, budget, instructions],
+      `INSERT INTO ingredients (name, meal_id, quantity, unit, price) VALUES (?, ?, ?, ?, ?)`,
+      [name, mealId, quantity, unit, price],
       (err, result) => {
         if (err) {
           return reject(err);
@@ -15,11 +15,11 @@ async function addMeal(userId, name, calories, date, budget, instructions) {
   });
 }
 
-async function getMealsByUserId(userId) {
+async function getIngredientsByMealId(mealId) {
   return new Promise((resolve, reject) => {
     db.query(
-      `SELECT * FROM meals WHERE user_id = ?`,
-      [userId],
+      `SELECT * FROM ingredients WHERE meal_id = ?`,
+      [mealId],
       (err, result) => {
         if (err) {
           reject(err);
@@ -30,4 +30,4 @@ async function getMealsByUserId(userId) {
   });
 }
 
-module.exports = { addMeal, getMealsByUserId };
+module.exports = { addIngredient, getIngredientsByMealId };
