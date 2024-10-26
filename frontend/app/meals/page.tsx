@@ -32,6 +32,7 @@ export default function MealsPage() {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [budgetSuggestions, setBudgetSuggestions] = useState<Meal[]>([]);
+  const [timeframe, setTimeframe] = useState<'monthly' | 'fortnightly'>('monthly');
 
   useEffect(() => {
     const decodedToken = jwtDecode(
@@ -439,7 +440,6 @@ export default function MealsPage() {
                         {meal.ingredients &&
                           meal.ingredients
                             .map((ing) => {
-                              console.log(ing);
                               return `${ing.name} (${ing.quantity} ${ing.unit})`;
                             })
                             .join(", ")}
@@ -504,7 +504,6 @@ export default function MealsPage() {
                     </div>
                   )}
                 </div>
-                {/* I dont know what this code is supposed to do, It currently stops the page from working
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     Timeframe
@@ -519,7 +518,7 @@ export default function MealsPage() {
                     <option value="monthly">Monthly</option>
                     <option value="fortnightly">Fortnightly</option>
                   </select>
-                </div> */}
+                </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     Budget (A$)
