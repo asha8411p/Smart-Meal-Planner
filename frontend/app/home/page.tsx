@@ -31,6 +31,7 @@ export default function Home() {
           name: mealSuggestion?.name,
           instructions: mealSuggestion?.instructions,
           calories: mealSuggestion?.calories,
+          ingredients: mealSuggestion?.ingredients,
           budget: mealSuggestion?.ingredients.reduce(
             (acc, ingredient) => acc + ingredient.price,
             0
