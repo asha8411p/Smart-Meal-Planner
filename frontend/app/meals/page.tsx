@@ -37,6 +37,7 @@ export default function MealsPage() {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [budgetSuggestions, setBudgetSuggestions] = useState<Meal[]>([]);
+  const [timeframe, setTimeframe] = useState<'monthly' | 'fortnightly'>('monthly');
 
   const handleInputChange = (index: number, field: keyof Ingredient, value: string) => {
     const updatedIngredients = [...ingredients];

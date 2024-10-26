@@ -23,7 +23,7 @@ router.post("", async (req, res) => {
 router.get("", async (req, res) => {
   const userId = req.query.userId;
   const meal = await mealService.getMeals(userId);
-  res.send(JSON.stringify(meals));
+  res.send(JSON.stringify(meal));
 });
 
 module.exports = router;
