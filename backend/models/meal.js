@@ -1,10 +1,10 @@
 const db = require("../db/connection");
 
-async function addMeal(userId, name, description, calories, duration) {
+async function addMeal(userId, name, calories, date, budget, instructions) {
   return new Promise((resolve, reject) => {
     db.query(
-      `INSERT INTO exercises (user_id, name, calories, date, budget) VALUES (?, ?, ?, ?, ?)`,
-      [userId, name, calories, date, budget],
+      `INSERT INTO meals (user_id, name, calories, date, budget, instructions) VALUES (?, ?, ?, ?, ?, ?)`,
+      [userId, name, calories, date, budget, instructions],
       (err, result) => {
         if (err) {
           return reject(err);

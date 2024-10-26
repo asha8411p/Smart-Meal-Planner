@@ -1,7 +1,7 @@
 const meals = require("../models/meal");
 
-async function saveMeal(userId, name, calories, date, budget) {
-  await meals.addMeal(userId, name, calories, date, budget);
+async function saveMeal(userId, name, calories, date, budget, instructions) {
+  await meals.addMeal(userId, name, calories, date, budget, instructions);
 }
 
 async function getMeals(userId) {
