@@ -1,11 +1,10 @@
-// app/components/DashboardPage.tsx
 
 "use client"; // Client-side component
 
-import { useState } from "react";
-import Header from '../components/ui/header'; // Adjust path as needed
-import { FiList, FiPieChart, FiChevronLeft, FiChevronRight } from 'react-icons/fi'; // Icons for sidebar
-import { motion } from 'framer-motion'; // For animations
+import { useState, useEffect } from "react";
+import Header from '../components/ui/header';
+import { FiList, FiPieChart, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { motion } from 'framer-motion';
 
 interface Meal {
   id: number;
@@ -22,19 +21,19 @@ interface Exercise {
 }
 
 interface ScheduledItem {
-  id: number;
+  id: string;
   title: string;
   start: Date;
   end: Date;
-  type: 'meal' | 'exercise';
+  type: 'meal' | 'exercise' | 'google-event';
 }
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'viewMeals' | 'viewExercises' | 'viewProgress' | 'schedule'>('viewMeals');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // State to control sidebar collapse
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [scheduledItems, setScheduledItems] = useState<ScheduledItem[]>([]);
 
-  // Mock Data
-  const [savedMeals] = useState<Meal[]>([
+  const savedMeals: Meal[] = [
     {
       id: 1,
       mealName: "Grilled Chicken Salad",
@@ -47,9 +46,9 @@ export default function DashboardPage() {
       description: "Italian pasta with a rich tomato meat sauce.",
       calories: "600",
     },
-  ]);
+  ];
 
-  const [savedExercises] = useState<Exercise[]>([
+  const savedExercises: Exercise[] = [
     {
       id: 1,
       exerciseName: "Morning Jog",
@@ -62,9 +61,38 @@ export default function DashboardPage() {
       description: "1-hour session focusing on strength training.",
       caloriesBurned: "400",
     },
-  ]);
+  ];
 
-  const [scheduledItems, setScheduledItems] = useState<ScheduledItem[]>([]);
+  const fetchGoogleCalendarEvents = async (accessToken: string) => {
+    try {
+      const response = await fetch("http://localhost:5000/calendar/events", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      const events = await response.json();
+
+      const googleEvents = events.map((event: any) => ({
+        id: event.id,
+        title: event.summary || "Untitled Event",
+        start: new Date(event.start.dateTime || event.start.date),
+        end: new Date(event.end.dateTime || event.end.date),
+        type: "google-event",
+      }));
+
+      setScheduledItems(googleEvents);
+    } catch (error) {
+      console.error("Failed to fetch Google Calendar events:", error);
+    }
+  };
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const accessToken = urlParams.get("access_token");
+    if (accessToken) {
+      fetchGoogleCalendarEvents(accessToken);
+    }
+  }, []);
 
   const handleScheduleItem = (item: Meal | Exercise, type: 'meal' | 'exercise') => {
     const title = type === 'meal' ? item.mealName : item.exerciseName;
@@ -77,7 +105,7 @@ export default function DashboardPage() {
     }
 
     const scheduledItem: ScheduledItem = {
-      id: scheduledItems.length + 1,
+      id: scheduledItems.length.toString(),
       title,
       start,
       end,
@@ -87,21 +115,21 @@ export default function DashboardPage() {
     setScheduledItems([...scheduledItems, scheduledItem]);
   };
 
-  async function handleScheduleToGoogleCalendar(item) {
+  async function handleScheduleToGoogleCalendar(item: ScheduledItem) {
     const event = {
       summary: item.title,
       start: {
         dateTime: item.start.toISOString(),
-        timeZone: 'America/Los_Angeles' // Adjust time zone as needed
+        timeZone: 'America/Los_Angeles'
       },
       end: {
         dateTime: item.end.toISOString(),
-        timeZone: 'America/Los_Angeles' // Adjust time zone as needed
+        timeZone: 'America/Los_Angeles'
       }
     };
 
     try {
-      const response = await fetch("http://localhost:5000/google/calendar/event", {
+      const response = await fetch("http://localhost:5000/calendar/event", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -118,7 +146,6 @@ export default function DashboardPage() {
       console.error("Error scheduling event:", error);
     }
   }
-
   return (
     <div className="min-h-screen bg-[var(--background-color)] text-[var(--foreground-color)] flex flex-col">
       <Header />
@@ -195,39 +222,29 @@ export default function DashboardPage() {
                 <p>No meals logged yet.</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {savedMeals.map((meal, index) => (
+                  {savedMeals.map((meal) => (
                     <motion.div
-                      key={index}
+                      key={meal.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
+                      transition={{ delay: meal.id * 0.1 }}
                       className="bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg p-6 hover:shadow-lg transition-shadow duration-300"
                     >
                       <h3 className="text-xl font-semibold mb-2">{meal.mealName}</h3>
                       <p className="mb-2">{meal.description}</p>
-                      <p>
-                        <strong>Calories:</strong> {meal.calories}
-                      </p>
-                      {/* <button
+                      <p><strong>Calories:</strong> {meal.calories}</p>
+                      <button
                         className="mt-4 bg-[var(--button-bg-color)] text-[var(--button-text-color)] py-1 px-4 rounded-full hover:bg-[var(--button-hover-color)] transition-all duration-300 font-semibold"
                         onClick={() => handleScheduleItem(meal, 'meal')}
                       >
                         Schedule Meal
-                      </button> */}
-                      <button
-                        className="schedule-google-button"
-                        onClick={() => handleScheduleToGoogleCalendar(meal)}
-                      >
-                        Add to Google Calendar
                       </button>
-
                     </motion.div>
                   ))}
                 </div>
               )}
             </div>
           )}
-
           {activeTab === 'viewExercises' && (
             <div>
               <h2 className="text-3xl font-semibold mb-6">Exercise History</h2>

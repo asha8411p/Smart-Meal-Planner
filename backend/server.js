@@ -49,28 +49,31 @@ app.get("/auth/google", (req, res) => {
 app.get("/auth/google/callback", async (req, res) => {
   const { code } = req.query;
   try {
+    // Exchange the authorization code for tokens
     const { tokens } = await oauth2Client.getToken(code);
     oauth2Client.setCredentials(tokens);
-    console.log("Received Tokens:", tokens); // Debugging line
-    res.json({ tokens });
+
+    // Redirect to frontend with the access token in the URL
+    res.redirect(`http://localhost:3000/dashboard?access_token=${tokens.access_token}&refresh_token=${tokens.refresh_token}`);
   } catch (error) {
-    console.error("Error in Google OAuth callback:", error.message);
+    console.error("Error retrieving tokens:", error);
     res.status(500).json({ error: error.message });
   }
 });
 
 // Calendar event route
-app.post("/calendar/event", async (req, res) => {
+app.get("/calendar/events", async (req, res) => {
   try {
-    const event = req.body;
     const calendar = google.calendar({ version: "v3", auth: oauth2Client });
-    const calendarEvent = await calendar.events.insert({
-      calendarId: "primary",
-      resource: event,
+    const events = await calendar.events.list({
+      calendarId: 'primary',
+      maxResults: 10,
+      singleEvents: true,
+      orderBy: 'startTime',
     });
-    res.json(calendarEvent.data);
+    res.json(events.data.items);
   } catch (error) {
-    console.error("Error creating calendar event:", error.message);
+    console.error("Error retrieving events:", error);
     res.status(500).json({ error: error.message });
   }
 });
