@@ -7,10 +7,7 @@ function setupTables() {
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     username VARCHAR(255) NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    weight FLOAT,
-    height FLOAT,
-    activity_level VARCHAR(255)
+    password VARCHAR(255) NOT NULL
 );`,
     (err, result) => {
       if (err) throw err;
