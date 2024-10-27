@@ -1,27 +1,64 @@
-"use client"; // Client-side component
-
-import { useState } from "react";
+"use client";
+import { useState, useEffect } from "react";
 import Select, { MultiValue, ActionMeta } from 'react-select';
-import Header from '../components/ui/header'; // Adjust the path based on your project structure
+import Header from '../components/ui/header';
 import { FaUserCircle } from 'react-icons/fa';
 import { useRouter } from "next/navigation";
+import { jwtDecode } from "jwt-decode";
 
-// Define the type for your options
+// Define types for options and decoded token
 interface OptionType {
   value: string;
   label: string;
 }
 
+interface DecodedToken {
+  id: string; // Ensure this matches your token's structure
+  name: string;
+  email: string;
+}
+
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
+  const [userData, setUserData] = useState({ name: "", email: "", userID: "" });
   const router = useRouter();
 
-  // Sample user information - replace with actual user data from backend when available
-  const userData = {
-    name: "John Doe",
-    email: "johndoe@example.com",
-    userID: "12345",
-  };
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/"); // Redirect to sign-in if no token found
+      return;
+    }
+
+    // Decode the token to retrieve user information
+    const decodedToken = jwtDecode<DecodedToken>(token);
+    console.log("Decoded token:", decodedToken); // Debugging line
+
+    fetch(`http://localhost:5000/profile`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    })
+
+      .then((response) => {
+        console.log("Response status:", response.status); // Debugging line
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error("Failed to fetch user data.");
+        }
+      })
+      .then((data) => {
+        console.log("Fetched user data:", data); // Debugging line
+        setUserData({ name: data.name, email: data.email, userID: data.id });
+      })
+      .catch((error) => {
+        console.error("An error occurred:", error);
+        alert("An error occurred while fetching user data.");
+      });
+  }, [router]);
 
   const [preference, setPreference] = useState("");
   const [allergies, setAllergies] = useState<OptionType[]>([]);
@@ -164,9 +201,6 @@ export default function ProfilePage() {
             </p>
             <p className="text-sm text-[var(--foreground-color)]">
               {userData.email}
-            </p>
-            <p className="text-sm text-[var(--foreground-color)]">
-              User ID: {userData.userID}
             </p>
           </div>
 
