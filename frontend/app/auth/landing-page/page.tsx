@@ -8,11 +8,22 @@ export default function LandingPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to /home if token is present in local storage
-    if (localStorage.getItem("token")) {
-      router.push("/home");
-    }
+    const checkAuth = async () => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        const response = await fetch("/api/auth/validate-token", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          router.push("/home");
+        } else {
+          localStorage.removeItem("token");
+        }
+      }
+    };
+    checkAuth();
   }, [router]);
+  
 
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-[var(--background-color)]">

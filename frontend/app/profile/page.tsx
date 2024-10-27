@@ -1,20 +1,65 @@
-// app/components/ProfilePage.tsx
-
-"use client"; // Client-side component
-
-import { useState } from "react";
+"use client";
+import { useState, useEffect } from "react";
 import Select, { MultiValue, ActionMeta } from 'react-select';
-import Header from '../components/ui/header'; // Adjust the path based on your project structure
+import Header from '../components/ui/header';
+import { FaUserCircle } from 'react-icons/fa';
+import { useRouter } from "next/navigation";
+import { jwtDecode } from "jwt-decode";
 
-// Define the type for your options
+// Define types for options and decoded token
 interface OptionType {
   value: string;
   label: string;
 }
 
+interface DecodedToken {
+  id: string; // Ensure this matches your token's structure
+  name: string;
+  email: string;
+}
+
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState("");
+  const [userData, setUserData] = useState({ name: "", email: "", userID: "" });
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/"); // Redirect to sign-in if no token found
+      return;
+    }
+
+    // Decode the token to retrieve user information
+    const decodedToken = jwtDecode<DecodedToken>(token);
+    console.log("Decoded token:", decodedToken); // Debugging line
+
+    fetch(`http://localhost:5000/profile`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    })
+
+      .then((response) => {
+        console.log("Response status:", response.status); // Debugging line
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error("Failed to fetch user data.");
+        }
+      })
+      .then((data) => {
+        console.log("Fetched user data:", data); // Debugging line
+        setUserData({ name: data.name, email: data.email, userID: data.id });
+      })
+      .catch((error) => {
+        console.error("An error occurred:", error);
+        alert("An error occurred while fetching user data.");
+      });
+  }, [router]);
+
   const [preference, setPreference] = useState("");
   const [allergies, setAllergies] = useState<OptionType[]>([]);
   const [dietaryRestrictions, setDietaryRestrictions] = useState<OptionType[]>([]);
@@ -127,8 +172,8 @@ export default function ProfilePage() {
 
   // Function to handle form submission
   const handleSubmit = async () => {
-    if (!name || !budget || !height || !weight) {
-      setError("Name, Budget, Height, and Weight are required fields");
+    if (!budget || !height || !weight) {
+      setError("Budget, Height, and Weight are required fields");
       setSuccessMessage("");
       return;
     }
@@ -148,29 +193,20 @@ export default function ProfilePage() {
             Profile
           </h2>
 
+          {/* User Info Section */}
+          <div className="text-center mb-8">
+            <FaUserCircle size={50} className="text-[var(--foreground-color)] mx-auto mb-2" />
+            <p className="text-lg font-semibold text-[var(--foreground-color)]">
+              {userData.name}
+            </p>
+            <p className="text-sm text-[var(--foreground-color)]">
+              {userData.email}
+            </p>
+          </div>
+
           {/* Profile Form */}
           <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-            {/* Name Field */}
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-[var(--foreground-color)] mb-2">
-                  Name <span className="text-red-500">*</span>
-                </label>
-                <div className="w-full bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg focus-within:ring-2 focus-within:ring-[var(--focus-ring-color)] h-12">
-                  <input
-                    type="text"
-                    placeholder="Enter your name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    disabled={!isEditing}
-                    className="w-full bg-transparent border-none text-[var(--foreground-color)] px-4 py-2 focus:outline-none"
-                    style={{
-                      height: "100%",
-                    }}
-                  />
-                </div>
-              </div>
-
               {/* Height and Weight Fields */}
               <div className="flex space-x-4">
                 {/* Height Field */}
@@ -220,9 +256,8 @@ export default function ProfilePage() {
                   Preference
                 </label>
                 <div
-                  className={`w-full bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg focus-within:ring-2 focus-within:ring-[var(--focus-ring-color)] h-auto ${
-                    !isEditing && "cursor-not-allowed"
-                  }`}
+                  className={`w-full bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg focus-within:ring-2 focus-within:ring-[var(--focus-ring-color)] h-auto ${!isEditing && "cursor-not-allowed"
+                    }`}
                 >
                   <Select
                     name="preference"
@@ -248,9 +283,8 @@ export default function ProfilePage() {
                   Exercise Level
                 </label>
                 <div
-                  className={`w-full bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg focus-within:ring-2 focus-within:ring-[var(--focus-ring-color)] h-auto ${
-                    !isEditing && "cursor-not-allowed"
-                  }`}
+                  className={`w-full bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg focus-within:ring-2 focus-within:ring-[var(--focus-ring-color)] h-auto ${!isEditing && "cursor-not-allowed"
+                    }`}
                 >
                   <Select
                     name="exerciseLevel"
@@ -276,9 +310,8 @@ export default function ProfilePage() {
                   Allergies
                 </label>
                 <div
-                  className={`w-full bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg focus-within:ring-2 focus-within:ring-[var(--focus-ring-color)] h-auto ${
-                    !isEditing && "cursor-not-allowed"
-                  }`}
+                  className={`w-full bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg focus-within:ring-2 focus-within:ring-[var(--focus-ring-color)] h-auto ${!isEditing && "cursor-not-allowed"
+                    }`}
                 >
                   <Select
                     isMulti
@@ -303,9 +336,8 @@ export default function ProfilePage() {
                 </label>
 
                 <div
-                  className={`w-full bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg focus-within:ring-2 focus-within:ring-[var(--focus-ring-color)] h-auto ${
-                    !isEditing && "cursor-not-allowed"
-                  }`}
+                  className={`w-full bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg focus-within:ring-2 focus-within:ring-[var(--focus-ring-color)] h-auto ${!isEditing && "cursor-not-allowed"
+                    }`}
                 >
                   <Select
                     isMulti
@@ -333,13 +365,13 @@ export default function ProfilePage() {
                 <div className="w-full flex items-center bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg focus-within:ring-2 focus-within:ring-[var(--focus-ring-color)] h-12">
                   <span className="pl-4 pr-2 text-[var(--foreground-color)]">A$</span>
                   <input
-                  type="text"
-                  placeholder="Enter budget"
-                  value={budget}
-                  onChange={handleBudgetChange}
-                  disabled={!isEditing}
-                  className="flex items-center w-full mt-3.5 px-5 bg-transparent border-none text-white focus:outline-none h-full"
-                />
+                    type="text"
+                    placeholder="Enter budget"
+                    value={budget}
+                    onChange={handleBudgetChange}
+                    disabled={!isEditing}
+                    className="flex items-center w-full mt-3.5 px-5 bg-transparent border-none text-white focus:outline-none h-full"
+                  />
                 </div>
               </div>
             </div>
@@ -366,16 +398,24 @@ export default function ProfilePage() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={!isEditing}
-                className={`py-2 px-6 rounded-full font-semibold transition-all duration-300 ${
-                  isEditing
-                    ? "bg-green-500 hover:bg-green-600 text-white"
-                    : "bg-gray-500 cursor-not-allowed"
-                }`}
+                className={`py-2 px-6 rounded-full font-semibold transition-all duration-300 ${isEditing
+                  ? "bg-green-500 hover:bg-green-600 text-white"
+                  : "bg-gray-500 cursor-not-allowed"
+                  }`}
               >
                 Confirm
               </button>
             </div>
           </form>
+          <button
+            onClick={() => {
+              localStorage.removeItem("token"); // Clear user session (token) from local storage
+              router.push("/"); // Redirect to the landing page
+            }}
+            className="font-bold text-lg text-[var(--foreground-color)] hover:text-white transition-colors duration-300 bg-[var(--button-bg-color)] py-2 px-6 rounded-full"
+          >
+            Logout
+          </button>
         </div>
       </div>
     </div>

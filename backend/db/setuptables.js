@@ -7,16 +7,33 @@ function setupTables() {
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     username VARCHAR(255) NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    weight FLOAT,
-    height FLOAT,
-    activity_level VARCHAR(255)
+    password VARCHAR(255) NOT NULL
 );`,
     (err, result) => {
       if (err) throw err;
       console.log("Table users created");
     }
   );
+
+  db.query(
+    `CREATE TABLE IF NOT EXISTS userinfo (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      preference VARCHAR(255),
+      allergies VARCHAR(1024),
+      dietary_restrictions VARCHAR(1024),
+      budget FLOAT,
+      height FLOAT,
+      weight FLOAT,
+      exercise_level VARCHAR(255),
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );`,
+    (err, result) => {
+      if (err) throw err;
+      console.log("Table userinfo created");
+    }
+  );
+
   db.query(
     `CREATE TABLE IF NOT EXISTS meals (
     id INT AUTO_INCREMENT PRIMARY KEY,
