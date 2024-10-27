@@ -33,6 +33,8 @@ export default function MealsPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [budgetSuggestions, setBudgetSuggestions] = useState<Meal[]>([]);
   const [timeframe, setTimeframe] = useState<'monthly' | 'fortnightly'>('monthly');
+  
+  const [suggestions, setSuggestions] = useState<Meal[]>([]);
 
   useEffect(() => {
     const decodedToken = jwtDecode(
@@ -54,6 +56,11 @@ export default function MealsPage() {
         setSavedMeals(data);
       });
   }, []);
+
+  useEffect(() => {
+    fetchSuggestions();
+  }, []);
+  
 
   const handleInputChange = (
     index: number,
@@ -167,6 +174,28 @@ export default function MealsPage() {
         setBudgetSuggestions(data);
       });
   };
+
+  const fetchSuggestions = async () => {
+    try {
+      const decodedToken = jwtDecode(localStorage.getItem("token")!) as DecodedToken;
+      const response = await fetch(`http://localhost:5000/meal/suggestions?userId=${decodedToken.id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setSuggestions(data);
+      } else {
+        throw new Error("Failed to fetch suggestions.");
+      }
+    } catch (error) {
+      console.error("Error fetching suggestions:", error);
+    }
+  };
+  
+  
+
 
   return (
     <div className="min-h-screen bg-[var(--background-color)] text-[var(--foreground-color)] flex flex-col">
@@ -537,6 +566,33 @@ export default function MealsPage() {
                 >
                   Generate
                 </button>
+
+                <div>
+                  <h2 className="text-3xl font-semibold mb-6">Suggested Meals</h2>
+                  {suggestions.length === 0 ? (
+                    <p>No suggestions available based on your profile.</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {suggestions.map((meal, index) => (
+                        <div
+                          key={index}
+                          className="bg-[var(--input-bg-color)] border border-[var(--input-border-color)] rounded-lg p-6 hover:shadow-lg transition-shadow duration-300"
+                        >
+                          <h3 className="text-xl font-semibold mb-2">{meal.name}</h3>
+                          <p className="mb-2">{meal.instructions}</p>
+                          <p className="mb-2">
+                            <strong>Ingredients:</strong> {meal.ingredients.map(ing => `${ing.name} (${ing.quantity} ${ing.unit})`).join(", ")}
+                          </p>
+                          <p className="mb-2"><strong>Calories:</strong> {meal.calories}</p>
+                          <p><strong>Budget:</strong> A${meal.budget}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+
+
               </div>
             </div>
           )}

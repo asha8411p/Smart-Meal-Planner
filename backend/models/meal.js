@@ -30,4 +30,17 @@ async function getMealsByUserId(userId) {
   });
 }
 
-module.exports = { addMeal, getMealsByUserId };
+async function getAllMeals() {
+  return new Promise((resolve, reject) => {
+    db.query("SELECT * FROM meals", (err, result) => {
+      if (err) {
+        return reject(err);
+      }
+      resolve(result);
+    });
+  });
+}
+
+
+
+module.exports = { addMeal, getMealsByUserId, getAllMeals };

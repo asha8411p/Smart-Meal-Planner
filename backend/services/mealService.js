@@ -39,4 +39,16 @@ async function addIngredientsToMeal(mealId, ingredients) {
   }
 }
 
-module.exports = { saveMeal, getMeals, addIngredientsToMeal };
+// Get all meals with ingredients attached to each meal for profile-based filtering
+async function getAllMeals() {
+  const allMeals = await meals.getAllMeals();
+  await Promise.all(
+    allMeals.map(async (meal) => {
+      const ingredients = await getIngredientsByMealId(meal.id);
+      meal.ingredients = ingredients;
+    })
+  );
+  return allMeals;
+}
+
+module.exports = { saveMeal, getMeals, addIngredientsToMeal, getAllMeals };
