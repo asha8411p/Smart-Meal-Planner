@@ -22,8 +22,10 @@ export default function SignIn() {
       .then((response) => {
         if (response.ok) {
           return response.json();
+        } else if (response.status === 401) {
+          throw new Error("Invalid username or password.");
         } else {
-          throw new Error("An error occurred. Please try again.");
+          throw new Error("An unexpected error occurred. Please try again.");
         }
       })
       .then((data) => {
@@ -32,9 +34,10 @@ export default function SignIn() {
       })
       .catch((error) => {
         console.error(error);
-        alert("An error occurred. Please try again.");
+        alert(error.message);
       });
   };
+  
 
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-[var(--background-color)]">
